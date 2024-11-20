@@ -28,13 +28,13 @@ const SearchResults = () => {
     }
   }, [query]);
 
-  const truncateTitle = (title, length = 15) => {
+  const truncateTitle = (title, length = 25) => {
     return title.length > length ? title.substring(0, length) + '...' : title;
   };
 
   return (
     <div className="search-results-container">
-      <h2>Search Results for: {query}</h2>
+      <h2 className="search-res"><strong>Search Results For:</strong> {query}</h2>
 
       {searchResults.length > 0 ? (
         <div className="search-results">
