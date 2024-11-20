@@ -23,8 +23,6 @@ const About = () => {
             <a href="https://www.linkedin.com/in/sai-tanuj-karavadi-0b6b54265/" target = "/" className="hire">
               Linkedin
             </a>
-          </div>
-          <div className="data">
             <a href="https://github.com/CyanCheetah" target = "/" className="hire">
               Github
             </a>
@@ -33,15 +31,8 @@ const About = () => {
             <a href="https://letterboxd.com/CyanCheetah/" target = "/" className="hire">
               My Letterboxd
             </a>
-          </div>
-          <div className="data">
             <a href="https://myanimelist.net/profile/CyanCheetah" target = "/" className="hire">
               My Anime List
-            </a>
-          </div>
-          <div className="data">
-            <a href="#" className="hire">
-              Go Back to CyanBase
             </a>
           </div>
         </div>

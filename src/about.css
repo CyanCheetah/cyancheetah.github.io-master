@@ -71,9 +71,10 @@ span {
   color: #fff;
   text-decoration: none;
   border: none;
-  padding: 12px 25px;
+  padding: 12px 50px;
   border-radius: 6px;
   transition: 0.5s;
+  margin-left: 16px;
 }
 
 .hire:hover {

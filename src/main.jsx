@@ -40,7 +40,7 @@ const TopBar = ({ query, setQuery }) => {
       <div className="logo-container">
         <span onClick={handleLogoClick} className="logo-image">
           <img
-            src="src/assets/CyanBase.png"
+            src="src/assets/NewLog.png"
             alt="logo"
             className="logo-image"
           />

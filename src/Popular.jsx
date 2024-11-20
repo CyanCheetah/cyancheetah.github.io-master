@@ -54,7 +54,7 @@ const Popular = () => {
     fetchPopularShows();
   }, [timeWindow, language, selectedGenre]);
 
-  const truncateDescription = (description, length = 100) => {
+  const truncateDescription = (description, length = 400) => {
     return description.length > length ? description.substring(0, length) + "..." : description;
   };
   const handleSearchInput = (e) => {
@@ -83,7 +83,7 @@ const Popular = () => {
         <div className="dropdown-container">
           <h3>Filter Options</h3>
           <div className="dropdown-item">
-            <label htmlFor="time-window">Sort by:</label>
+            <label htmlFor="time-window">Sort by: </label>
             <select
               id="time-window"
               value={timeWindow}
@@ -95,7 +95,7 @@ const Popular = () => {
             </select>
           </div>
           <div className="dropdown-item">
-            <label htmlFor="language">Language:</label>
+            <label htmlFor="language">Language: </label>
             <select
               id="language"
               value={language}
@@ -109,7 +109,7 @@ const Popular = () => {
             </select>
           </div>
           <div className="dropdown-item">
-            <label htmlFor="genres">Genre:</label>
+            <label htmlFor="genres">Genre: </label>
             <select
               id="genres"
               value={selectedGenre}
@@ -138,6 +138,7 @@ const Popular = () => {
               </div>
               <div className="show-info">
                 <h4>{show.name}</h4>
+                <h5>Date: {show.first_air_date}</h5>
                 <p>{truncateDescription(show.overview)}</p>
               </div>
             </Link>
