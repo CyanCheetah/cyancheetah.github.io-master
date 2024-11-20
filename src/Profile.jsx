@@ -22,7 +22,7 @@ const Profile = () => {
       );
       const tokenData = await tokenResponse.json();
       if (tokenData.success) {
-        
+
         const requestToken = tokenData.request_token;
         console.log("Request Token:", requestToken);
         redirectToAuthPage(requestToken);
@@ -172,37 +172,6 @@ const Profile = () => {
 
   return (
     <div className="profile">
-      {/* Header */}
-      <div className="top-bar">
-        <div className="logo-container">
-          <span onClick={handleLogoClick} className="logo">
-            <img
-              src="https://images.vexels.com/content/128877/preview/television-flat-icon-48e28d.png"
-              alt="logo"
-              className="logo-image"
-            />
-            CyanBase
-          </span>
-        </div>
-        <div className="navigation-container">
-          <a className="button-30" href="#/popular">Popular</a>
-          <a className="button-30" href="#/profile">Profile</a>
-        </div>
-        <div className="search-container">
-          <input
-            type="text"
-            className="search-bar"
-            placeholder="Search..."
-            value={query}
-            onChange={handleSearchInput}
-            onKeyPress={handleSearch}
-          />
-          <button className="button" type="submit" onClick={handleSearch}>
-            <i className="fa fa-search"></i>
-          </button>
-        </div>
-      </div>
-
       {searchResults.length > 0 ? (
         <div className="search-results">
           {searchResults.map((show) => (
@@ -243,22 +212,7 @@ const Profile = () => {
         </>
       )}
 
-      {/* Footer */}
-      <footer className="footer">
-        <div className="footer-left">
-          &copy; {new Date().getFullYear()}
-          <a href="https://github.com/CyanCheetah" target="_blank" rel="noopener noreferrer">
-            Sai Tanuj Karavadi
-          </a>
-        </div>
-        <div className="footer-center">
-          Film data from
-          <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" className="tmdb-link">TMDB</a>
-        </div>
-        <div className="footer-right">
-          <a href="about.html" className="about-link">About</a>
-        </div>
-      </footer>
+
     </div>
   );
 };
