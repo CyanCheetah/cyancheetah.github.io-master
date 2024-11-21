@@ -53,7 +53,7 @@ body {
   height: 90%; /* Maintain the aspect ratio */
   padding-top: 1px;
   display: block;
-  transform: scale(1.2) scaleX(1.6);
+  transform: scale(1.1) scaleX(1.6);
   transition: transform 0.3s ease, opacity 0.3s ease; /* Smooth hover effect */
 }
 
@@ -381,6 +381,33 @@ form.example::after {
   white-space: nowrap;
   will-change: box-shadow, transform;
   font-size: 18px;
+}
+/* Container for the trailer section */
+.trailer-container {
+  margin-top: 40px; /* Adds space between the search bar and trailer section */
+  text-align: center; /* Centers the trailer content */
+}
+
+/* Title for the trailer section */
+.trailer-container h2 {
+  font-size: 24px;
+  color: #2c3e50; /* Dark gray color for the title */
+}
+
+/* Video iframe container */
+.trailer-container .trailer-video {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #fff; /* White background for the video container */
+  border-radius: 10px; /* Rounded corners for the video container */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* Soft shadow for a card effect */
+}
+
+/* Video iframe styling */
+.trailer-video iframe {
+  max-width: 100%; /* Makes the video responsive */
+  height: 315px; /* Fixed height for the video */
+  border-radius: 5px; /* Rounded corners for the video frame */
 }
 
 .button-30:focus {

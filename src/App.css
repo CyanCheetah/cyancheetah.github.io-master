@@ -11,13 +11,23 @@
   align-items: center;
   margin: 0;
   padding: 0;
+
 }
+
 
 .show-title {
   font-size: 50px;
   font-weight: bold;
   color: #333;
 }
+
+.show-year {
+  font-size: 25px;
+  font-weight: bold;
+  color: #333;
+  margin: 1%;
+}
+
 
 /* Main Content Layout */
 .show-details-content {
@@ -72,7 +82,7 @@
 /* Actor List Styling */
 .actors-list {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
   padding: 15px;
 }
@@ -88,16 +98,54 @@
 }
 
 .actor-image {
+  margin-top: 10px; /* Adds some space between text and the line */
   width: 115px;
   height: 145px;
   object-fit: cover;
   border-radius: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 0px;
 }
 
 .actor-item p {
   margin-top: 8px;
 }
+.actor-name {
+  white-space: nowrap;
+  font-size: clamp(11px, 4vw, 17px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.char-name {
+  white-space: nowrap;
+  font-size: clamp(11px, 4vw, 17px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.missing-actor-image {
+  width: 80%;
+  height: auto;
+  display: flex;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  margin-left: 10%;
+}
+
+.missing-actor-image-img {
+  max-width: 80%; /* Ensures the image stays within the div */
+  max-height: 80%; /* Ensures the image stays within the div */
+  object-fit: contain; /* Keeps the aspect ratio of the image intact */
+}
+
+.character-section {
+  font-size: 18px;  /* Adjust font size as needed */
+  font-weight: bold;
+  color: #333;
+  border-bottom: 2px solid #333; /* Adds a line underneath */
+  padding-bottom: 6px; /* Adds some space between text and the line */
+}
+
 
 /* Interactive Icons Below Posters */
 .poster-icons {
@@ -154,10 +202,28 @@
   color: white;
   padding: 40px;
   border-radius: 8px;
-  max-width: 600px;
-  width: 90%;
-  text-align: center;
+  max-width: 80%;
+  width: 80%;
+  height: 80%;
+  display: flex;
+  flex-direction: row;
   position: relative;
+  overflow: hidden; /* Ensures the content doesn't overflow outside of the modal */
+}
+
+.actor-details-left {
+  flex: 1;
+  max-width: 200px;
+  margin-right: 20px;
+  text-align: center;
+}
+
+.actor-details-right {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow-y: auto;  /* Enables scrolling if content overflows */
 }
 
 .actor-details-image {
@@ -165,6 +231,49 @@
   height: auto;
   border-radius: 10px;
   margin-bottom: 20px;
+}
+
+.actor-details-right h2 {
+  margin-top: 0;
+}
+
+.actor-details-bio {
+  flex: 1;
+  margin-bottom: 20px;
+}
+
+.actor-movies {
+  margin-top: 20px;
+}
+
+.known-for-movie {
+  display: flex;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.known-for-movie img {
+  width: 100px;
+  height: 150px;
+  border-radius: 8px;
+  margin-right: 10px;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: red;
+  color: white;
+  font-size: 20px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  background-color: darkred;
 }
 
 .close-button {
@@ -246,10 +355,6 @@
     width: 100%;
   }
 
-  .actors-list {
-    grid-template-columns: repeat(2, 1fr);
-    /* 2 actors per row on smaller screens */
-  }
 
   .actor-image {
     width: 90px;
@@ -294,5 +399,43 @@
   .button:hover {
     background: #0b7dda;
   }
+
+  .show-details-right h2 {
+    font-size: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .show-title {
+    font-weight: bold;
+    font-size: 2rem;
+    color: #333;
+  }
+  
+  .show-year {
+    font-size: 1.5rem;
+    font-weight: normal;
+    color: #666;
+  }
+  
+  .show-director {
+    font-size: 1rem;
+    color: #555;
+    margin-left: 10px;
+  }
+  
+  .director-link {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .director-link:hover {
+    text-decoration: underline;
+    color: #0056b3;
+  }
+  
 
 }

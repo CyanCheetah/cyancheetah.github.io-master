@@ -1,9 +1,5 @@
-/**
- * @author 
- * @date 
- */
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './Home.css';
 
 const TMDB_API_KEY = '7ceb22d73d90c1567ca77b9aedb51cd8';
@@ -13,9 +9,9 @@ const Home = () => {
 
   const [randomShows, setRandomShows] = useState([]); // State for storing randomly fetched TV shows
   const [query, setQuery] = useState(''); // State for the search bar query
+  const [searchResults, setSearchResults] = useState([]); // State for storing search results
   const navigate = useNavigate(); // For programmatic navigation
 
-  // Fetch random shows on component mount
   useEffect(() => {
     const fetchRandomShows = async () => {
       try {
@@ -39,9 +35,32 @@ const Home = () => {
   };
 
   // Navigate to the search results page when searching
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     if (e.key === 'Enter' || e.type === 'click') {
-      navigate(`/search?query=${query}`); // Pass the search query to the SearchResults component via the URL
+      const response = await fetch(
+        `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${query}&language=en-US`
+      );
+      const data = await response.json();
+      setSearchResults(data.results); // Store the search results
+
+      if (data.results.length > 0) {
+        navigate(`/show/${data.results[0].id}`); // Navigate to the first result
+      }
+    }
+  };
+
+  // Navigate to the first result when the "I'm Feeling Lucky" button is clicked
+  const handleLuckyClick = async () => {
+    if (query.trim() !== '') {
+      const response = await fetch(
+        `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${query}&language=en-US`
+      );
+      const data = await response.json();
+      setSearchResults(data.results); // Store the search results
+
+      if (data.results.length > 0) {
+        navigate(`/show/${data.results[0].id}`); // Navigate to the first result
+      }
     }
   };
 
@@ -52,10 +71,6 @@ const Home = () => {
 
   return (
     <div className="home">
-      
-
-      
-
       {/* Show Carousel */}
       <div className="show-carousel-container">
         <div className="show-carousel">
@@ -85,10 +100,13 @@ const Home = () => {
           placeholder="Search..."
           value={query}
           onChange={handleSearchInput}
-          onKeyPress={handleSearch} // Trigger search on Enter key press
+          onKeyPress={handleSearch}
         />
         <button className="button2" type="submit" onClick={handleSearch}>
           <i className="fa fa-search"></i>
+        </button>
+        <button className="button-30" onClick={handleLuckyClick}>
+          I'm Feeling Lucky
         </button>
       </div>
     </div>
