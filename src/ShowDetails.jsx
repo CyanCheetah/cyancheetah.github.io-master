@@ -155,57 +155,56 @@ function ShowDetails() {
       )}
 
       {/* Actor Details Modal */}
-      {selectedActor && (
-        <div className="actor-details-modal">
-          <div className="actor-details-content">
-            <button className="close-button" onClick={closeActorModal}>
-              ×
-            </button>
+{selectedActor && (
+  <div className="actor-details-modal">
+    <div className="actor-details-content">
+      <button className="close-button" onClick={closeActorModal}>
+        ×
+      </button>
 
-            {/* Left side: Image and Name */}
-            <div className="actor-details-left">
-              <img
-                src={`https://image.tmdb.org/t/p/w300${selectedActor.profile_path}`}
-                alt={selectedActor.name}
-                className="actor-details-image"
-              />
-              <h2>{selectedActor.name}</h2>
-            </div>
+      {/* Left side: Image and Name */}
+      <div className="actor-details-left">
+        <img
+          src={`https://image.tmdb.org/t/p/w300${selectedActor.profile_path}`}
+          alt={selectedActor.name}
+          className="actor-details-image"
+        />
+        <h2>{selectedActor.name}</h2>
+      </div>
 
-            {/* Right side: Biography and Known For Movies */}
-            <div className="actor-details-right">
-              <div className="actor-details-bio">
-                <p><strong>Born:</strong> {selectedActor.birthday || 'N/A'}</p>
-                <p>{selectedActor.biography || 'No biography available.'}</p>
-              </div>
-
-              {/* Actor's Latest TV Shows */}
-              <div className="latest-shows">
-                <h3>Latest TV Shows</h3>
-                {actorMovies && actorMovies.map((show) => (  // Display TV shows here
-                  <Link
-                    to={`/show/${show.id}`}
-                    key={show.id}
-                    onClick={() => closeActorModal()}  // Close the modal when a show is clicked
-                  >
-                    <div className="known-for-show">
-                      <img
-                        src={`https://image.tmdb.org/t/p/w200${show.poster_path}`}
-                        alt={show.name}  // Use show.name for TV show
-                      />
-                      <div>
-                        <p>{show.name}</p>  {/* Show name */}
-                        <p>({show.first_air_date ? show.first_air_date.split('-')[0] : 'N/A'})</p>  {/* Show first air date */}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-
-            </div>
-          </div>
+      {/* Right side: Biography and Known For Movies */}
+      <div className="actor-details-right">
+        <div className="actor-details-bio">
+          <p><strong>Born:</strong> {selectedActor.birthday || 'N/A'}</p>
+          <p>{selectedActor.biography || 'No biography available.'}</p>
         </div>
-      )}
+
+        {/* Actor's Latest TV Shows */}
+        <div className="actor-container">
+          <h3>Latest TV Shows</h3>
+          {actorMovies && actorMovies.map((show) => (
+            <Link
+              to={`/show/${show.id}`}
+              key={show.id}
+              onClick={() => closeActorModal()}  // Close the modal when a show is clicked
+            >
+              <div className="actor-poster">
+                <img
+                  src={`https://image.tmdb.org/t/p/w500${show.poster_path}`}
+                  alt={show.name}  // Use show.name for TV show
+                />
+                <h2>{show.name}</h2>
+                <p>({show.first_air_date ? show.first_air_date.split('-')[0] : 'N/A'})</p> {/* Show year */}
+              </div>
+            </Link>
+          ))}
+        </div>
+
+      </div>
+    </div>
+  </div>
+)}
+
 
     </div>
   );

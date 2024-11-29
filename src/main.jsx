@@ -11,6 +11,7 @@ import ShowDetails from './ShowDetails.jsx';
 import Profile from './Profile.jsx';
 import Popular from './Popular.jsx';
 import About from './About.jsx';
+import TopRated from './TopRated.jsx';
 import SearchResults from './SearchResults.jsx'; // Import the SearchResults component
 import './Home.css';
 
@@ -48,6 +49,7 @@ const TopBar = ({ query, setQuery }) => {
       </div>
       <div className="navigation-container">
         <a className="button-30" href="#/popular">Popular</a>
+        <a className="button-30" href="#/top-rated">Top Rated</a>
         <a className="button-30" href="#/profile">Profile</a>
         <a className="button-30" href="#/about">About</a>
       </div>
@@ -81,7 +83,8 @@ function Main() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/popular" element={<Popular />} />
           <Route path="/about" element={<About />} />
-          <Route path="/search" element={<SearchResults />} /> {/* Add route for SearchResults */}
+          <Route path="/top-rated" element={<TopRated />} />
+          <Route path="/search" element={<SearchResults />} />
         </Routes>
         {/* Footer */}
         <footer className="footer">

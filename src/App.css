@@ -183,7 +183,65 @@
   height: 20px;
 }
 
-/* Actor Details Modal */
+/* Actor Container for the Modal */
+.actor-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 5fr));
+  gap: 40px;
+  margin: 20px auto;
+  max-width: 1200px;
+}
+
+.actor-poster {
+  position: relative;
+  overflow: hidden;
+  width: 200px;
+  height: 450px; /* Increase the height to prevent cutting off */
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Ensure the title and year are pushed below */
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.actor-poster img {
+  width: 100%;
+  height: 100%;  /* Adjust the image height to ensure it's not stretched */
+  object-fit: cover;
+}
+
+.actor-poster h2 {
+  font-size: 1.25rem;
+  margin: 10px 15px;
+  color: #fff; /* Ensure the text color is visible */
+  text-align: center; /* Center the title */
+}
+
+.actor-poster p {
+  font-size: 1rem;
+  margin: 0 15px 15px;
+  color: #fff; /* Ensure the text color is visible */
+  text-align: center; /* Center the year */
+}
+
+
+
+.actor-poster:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+
+.actor-container h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: #222;
+}
+
+
+/* Actor Details Modal Adjustments */
 .actor-details-modal {
   position: fixed;
   top: 0;
@@ -208,7 +266,7 @@
   display: flex;
   flex-direction: row;
   position: relative;
-  overflow: hidden; /* Ensures the content doesn't overflow outside of the modal */
+  overflow: hidden;
 }
 
 .actor-details-left {
@@ -223,7 +281,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  overflow-y: auto;  /* Enables scrolling if content overflows */
+  overflow-y: auto;
 }
 
 .actor-details-image {
@@ -246,18 +304,23 @@
   margin-top: 20px;
 }
 
-.known-for-movie {
+
+.known-for-show {
   display: flex;
-  margin-bottom: 10px;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
 }
 
-.known-for-movie img {
-  width: 100px;
-  height: 150px;
+.known-for-show img {
+  width: 200px;
+  height: 275px;
   border-radius: 8px;
-  margin-right: 10px;
+  margin-bottom: 10px;
 }
+
 
 .close-button {
   position: absolute;
@@ -274,19 +337,6 @@
 
 .close-button:hover {
   background-color: darkred;
-}
-
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: red;
-  color: white;
-  font-size: 20px;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
 }
 
 .watch-button {
