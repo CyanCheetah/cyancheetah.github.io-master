@@ -10,6 +10,7 @@ const TopRated = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [showAnimation, setShowAnimation] = useState(false);
+  //const [showNonAnimation, setShowNonAnimation] = useState(false);
   const observer = useRef();
 
   const fetchTopRatedShows = async (currentPage, isAnimation) => {

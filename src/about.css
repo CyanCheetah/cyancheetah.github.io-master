@@ -18,12 +18,13 @@
 
 .pic {
   height: auto;
-  width: 400px;
+  width: 570px;
   border-radius: 12px;
+  margin-right: 100px;
 }
 
 .about {
-  width: 1130px;
+  width: 80%;
   max-width: 85%;
   margin: 0 auto;
   display: flex;
@@ -32,7 +33,7 @@
 }
 
 .text {
-  width: 540px;
+  width: 700px;
 }
 
 .text h2 {
