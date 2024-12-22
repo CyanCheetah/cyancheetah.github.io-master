@@ -423,3 +423,124 @@ form.example::after {
   box-shadow: #D6D6E7 0 3px 7px inset;
   transform: translateY(2px);
 }
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  max-width: 1400px; /* Increase from default */
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.carousel-item {
+  position: relative;
+  width: 100%;
+  height: 600px; /* Increase from default */
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.carousel-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.carousel-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px; /* Increase padding */
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0));
+  color: white;
+}
+
+.carousel-title {
+  font-size: 2.5rem; /* Increase font size */
+  margin-bottom: 15px;
+}
+
+.carousel-description {
+  font-size: 1.2rem; /* Increase font size */
+  max-width: 800px; /* Increase max-width */
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .carousel-item {
+    height: 400px;
+  }
+
+  .carousel-title {
+    font-size: 1.8rem;
+  }
+
+  .carousel-description {
+    font-size: 1rem;
+  }
+}
+
+/* Mobile-first carousel */
+.carousel-container {
+  padding: 10px;
+}
+
+.carousel-item {
+  height: 300px;
+}
+
+.carousel-content {
+  padding: 20px;
+}
+
+.carousel-title {
+  font-size: 1.5rem;
+}
+
+.carousel-description {
+  font-size: 1rem;
+  max-width: 100%;
+}
+
+/* Tablet and desktop carousel */
+@media (min-width: 768px) {
+  .carousel-container {
+    padding: 20px;
+  }
+
+  .carousel-item {
+    height: 600px;
+  }
+
+  .carousel-content {
+    padding: 40px;
+  }
+
+  .carousel-title {
+    font-size: 2.5rem;
+  }
+
+  .carousel-description {
+    font-size: 1.2rem;
+    max-width: 800px;
+  }
+}
+
+/* Adjust search for mobile */
+.search-bar2 {
+  width: 90%;
+  font-size: 24px;
+  padding: 8px 15px;
+}
+
+@media (min-width: 768px) {
+  .search-bar2 {
+    width: 60%;
+    font-size: 32px;
+    padding-top: 6px;
+    padding-bottom: 11px;
+  }
+}

@@ -1,0 +1,88 @@
+.actor-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: white;
+  background: #1a1a1a;
+  min-height: calc(100vh - 80px);
+}
+
+.actor-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.actor-header img {
+  width: 200px;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.actor-info {
+  margin-bottom: 40px;
+}
+
+.actor-recent-shows {
+  margin-top: 30px;
+}
+
+.shows-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.show-card {
+  text-decoration: none;
+  color: white;
+  transition: transform 0.3s ease;
+}
+
+.show-card:hover {
+  transform: scale(1.05);
+}
+
+.show-card img {
+  width: 100%;
+  height: 225px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.show-info {
+  padding: 10px 0;
+}
+
+.show-info h3 {
+  font-size: 1rem;
+  margin: 5px 0;
+}
+
+.show-info p {
+  font-size: 0.9rem;
+  color: #888;
+  margin: 2px 0;
+}
+
+.character {
+  font-style: italic;
+}
+
+.back-button {
+  margin-top: 30px;
+  padding: 10px 20px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.back-button:hover {
+  background: #1976D2;
+} 

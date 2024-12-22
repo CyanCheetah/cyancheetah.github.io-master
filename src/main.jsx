@@ -2,7 +2,7 @@
  * @author Sai Tanuj Karavadi
  * @date 11/19/2024
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { HashRouter as Router, Route, Routes, useNavigate, Link } from 'react-router-dom';
 import './App.css';
@@ -17,6 +17,7 @@ import './Home.css';
 import Login from './Login.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PrivateRoute } from './components/PrivateRoute';
+import ActorPage from './ActorPage.jsx';
 
 const TMDB_API_KEY = '7ceb22d73d90c1567ca77b9aedb51cd8';
 
@@ -24,6 +25,19 @@ const TMDB_API_KEY = '7ceb22d73d90c1567ca77b9aedb51cd8';
 const TopBar = ({ query, setQuery }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Add click outside handler to close menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMenuOpen && !event.target.closest('.navigation-container')) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [isMenuOpen]);
 
   const handleSearchInput = (e) => {
     setQuery(e.target.value);
@@ -31,55 +45,81 @@ const TopBar = ({ query, setQuery }) => {
 
   const handleSearch = (e) => {
     if (e.key === 'Enter' || e.type === 'click') {
-      navigate(`/search?query=${query}`); // Navigate to SearchResults with query as a parameter
+      navigate(`/search?query=${query}`);
+      setIsMenuOpen(false);
     }
   };
 
   const handleLogoClick = () => {
     setQuery('');
     navigate('/');
+    setIsMenuOpen(false);
+  };
+
+  const toggleMenu = (e) => {
+    e.stopPropagation(); // Prevent click from immediately closing menu
+    setIsMenuOpen(!isMenuOpen);
   };
 
   return (
     <div className="top-bar">
       <div className="logo-container">
         <span onClick={handleLogoClick} className="logo-image">
-          <img
-            src="/assets/PlsWork.png"
-            alt="logo"
-            className="logo-image"
+          <img 
+            src="/assets/PlsWork.png" 
+            alt="logo" 
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
           />
         </span>
       </div>
+      
       <div className="navigation-container">
-        <Link to="/popular" className="button-30">Popular</Link>
-        <Link to="/top-rated" className="button-30">Top Rated</Link>
-        {user ? (
-          <>
-            <Link to="/profile" className="button-30">Profile</Link>
-            <button className="button-30" onClick={() => {
-              logout();
-              navigate('/');
-            }}>Logout</button>
-          </>
-        ) : (
-          <Link to="/login" className="button-30">Log In</Link>
-        )}
-      </div>
-      <div className="right-container">
-        <div className="search-container">
-          <input
-            type="text"
-            className="search-bar"
-            placeholder="Search..."
-            value={query}
-            onChange={handleSearchInput}
-            onKeyPress={handleSearch}
-          />
-          <button className="button" type="submit" onClick={handleSearch}>
-            <i className="fa fa-search"></i>
-          </button>
+        <button className="mobile-menu-button" onClick={toggleMenu}>
+          ☰
+        </button>
+        <div className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
+          <Link to="/popular" className="button-30" onClick={() => navigate('/popular')}>
+            Popular
+          </Link>
+          <Link to="/top-rated" className="button-30" onClick={() => navigate('/top-rated')}>
+            Top Rated
+          </Link>
+          {user ? (
+            <>
+              <Link to="/profile" className="button-30" onClick={() => navigate('/profile')}>
+                Profile
+              </Link>
+              <button 
+                className="button-30" 
+                onClick={() => {
+                  logout();
+                  navigate('/');
+                }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="button-30" onClick={() => navigate('/login')}>
+              Log In
+            </Link>
+          )}
         </div>
+      </div>
+
+      {/* Only show search on desktop */}
+      <div className="search-container desktop-only">
+        <input
+          type="text"
+          className="search-bar"
+          placeholder="Search..."
+          value={query}
+          onChange={handleSearchInput}
+          onKeyPress={handleSearch}
+        />
+        <button className="button" type="submit" onClick={handleSearch}>
+          <i className="fa fa-search"></i>
+        </button>
       </div>
     </div>
   );
@@ -109,6 +149,7 @@ function Main() {
             <Route path="/top-rated" element={<TopRated />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/actor/:id" element={<ActorPage />} />
           </Routes>
           {/* Footer */}
           <footer className="footer">

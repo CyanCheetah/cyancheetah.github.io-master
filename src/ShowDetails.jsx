@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import './App.css';
+import './ShowDetails.css';
 import { useAuth } from './context/AuthContext';
 import { authService } from './services/auth';
 // ADD COMMENTS!!!!!!
@@ -114,25 +114,33 @@ function ShowDetails() {
   }, [user, showDetails, id]);
 
   const handleActorClick = async (actorId) => {
+    const isMobile = window.innerWidth <= 768;
+    
     try {
+      // Fetch actor details
       const response = await fetch(
         `https://api.themoviedb.org/3/person/${actorId}?api_key=${TMDB_API_KEY}&language=en-US`
       );
       const actorData = await response.json();
-      setSelectedActor(actorData);
-
-      // Fetch actor's TV show credits (use tv_credits instead of movie_credits)
+      
+      // Fetch actor's TV shows
       const showsResponse = await fetch(
         `https://api.themoviedb.org/3/person/${actorId}/tv_credits?api_key=${TMDB_API_KEY}&language=en-US`
       );
       const showsData = await showsResponse.json();
 
-      // Filter and sort the latest TV shows based on first air date
+      // Filter and sort shows by popularity
       const latestShows = showsData.cast
-        .filter((show) => show.first_air_date) // Filter TV shows with a first air date
-        .sort((a, b) => new Date(b.first_air_date) - new Date(a.first_air_date)); // Sort by most recent first air date
+        .filter(show => show.poster_path) // Only shows with posters
+        .sort((a, b) => b.popularity - a.popularity) // Sort by popularity
+        .slice(0, 8); // Limit to 8 shows
 
-      setActorMovies(latestShows); // Set the actor's latest TV shows
+      if (isMobile) {
+        navigate(`/actor/${actorId}`, { state: { actorData, shows: latestShows } });
+      } else {
+        setSelectedActor(actorData);
+        setActorMovies(latestShows);
+      }
     } catch (error) {
       console.error('Error fetching actor details:', error);
     }
@@ -244,6 +252,8 @@ function ShowDetails() {
 
     try {
       const episodeNum = parseInt(episode);
+      if (isNaN(episodeNum)) return;
+
       await authService.updateShowProgress(
         showDetails.id,
         showDetails.name,
@@ -251,11 +261,25 @@ function ShowDetails() {
         season,
         episodeNum
       );
-      setShowProgress({
-        ...showProgress,
+
+      setShowProgress(prev => ({
+        ...prev,
         current_season: season,
         current_episode: episodeNum
-      });
+      }));
+
+      // Also update the status to watching if it's not already
+      if (status !== 'watching') {
+        setStatus('watching');
+        await authService.updateShowStatus(
+          showDetails.id,
+          showDetails.name,
+          showDetails.poster_path,
+          'watching',
+          score,
+          episodeNum
+        );
+      }
     } catch (error) {
       console.error('Error updating episode progress:', error);
     }
@@ -389,11 +413,13 @@ function ShowDetails() {
                             onChange={(e) => {
                               const value = e.target.value;
                               if (value === '' || /^\d+$/.test(value)) {
-                                handleEpisodeUpdate(currentSeason, value);
+                                const episodeNum = value === '' ? 0 : parseInt(value);
+                                handleEpisodeUpdate(currentSeason, episodeNum);
                               }
                             }}
                             onBlur={(e) => {
-                              if (e.target.value === '') {
+                              const value = e.target.value;
+                              if (value === '') {
                                 handleEpisodeUpdate(currentSeason, 0);
                               }
                             }}
@@ -467,11 +493,8 @@ function ShowDetails() {
 {selectedActor && (
   <div className="actor-details-modal">
     <div className="actor-details-content">
-      <button className="close-button" onClick={closeActorModal}>
-        ×
-      </button>
+      <button className="close-button" onClick={closeActorModal}>×</button>
 
-      {/* Left side: Image and Name */}
       <div className="actor-details-left">
         <img
           src={`https://image.tmdb.org/t/p/w300${selectedActor.profile_path}`}
@@ -481,34 +504,32 @@ function ShowDetails() {
         <h2>{selectedActor.name}</h2>
       </div>
 
-      {/* Right side: Biography and Known For Movies */}
       <div className="actor-details-right">
         <div className="actor-details-bio">
           <p><strong>Born:</strong> {selectedActor.birthday || 'N/A'}</p>
           <p>{selectedActor.biography || 'No biography available.'}</p>
         </div>
 
-        {/* Actor's Latest TV Shows */}
-        <div className="actor-container">
+        <div className="actor-shows-section">
           <h3>Latest TV Shows</h3>
-          {actorMovies && actorMovies.map((show) => (
-            <Link
-              to={`/show/${show.id}`}
-              key={show.id}
-              onClick={() => closeActorModal()}  // Close the modal when a show is clicked
-            >
-              <div className="actor-poster">
+          <div className="actor-shows-grid">
+            {actorMovies && actorMovies.map((show) => (
+              <Link
+                to={`/show/${show.id}`}
+                key={show.id}
+                className="actor-show-card"
+                onClick={closeActorModal}
+              >
                 <img
                   src={`https://image.tmdb.org/t/p/w500${show.poster_path}`}
-                  alt={show.name}  // Use show.name for TV show
+                  alt={show.name}
                 />
-                <h2>{show.name}</h2>
-                <p>({show.first_air_date ? show.first_air_date.split('-')[0] : 'N/A'})</p> {/* Show year */}
-              </div>
-            </Link>
-          ))}
+                <h3>{show.name}</h3>
+                <p>({show.first_air_date ? show.first_air_date.split('-')[0] : 'N/A'})</p>
+              </Link>
+            ))}
+          </div>
         </div>
-
       </div>
     </div>
   </div>

@@ -11,6 +11,11 @@ const Profile = () => {
   const [currentlyWatching, setCurrentlyWatching] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [profileData, setProfileData] = useState({
+    description: user?.description || '',
+    profilePicture: user?.profile_picture || null
+  });
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -70,13 +75,42 @@ const Profile = () => {
       const show = currentlyWatching.find(s => s.show_id === showId);
       if (show) {
         await authService.markAsWatched(showId, show.show_title, show.poster_path);
+        // Remove from currently watching
         setCurrentlyWatching(prev => prev.filter(s => s.show_id !== showId));
+        // Remove from progress
+        await authService.removeFromProgress(showId);
         // Refresh recently watched
         const watchedData = await authService.getWatchedShows();
         setRecentlyWatched(watchedData.slice(0, 8));
       }
     } catch (err) {
       console.error('Failed to mark as completed:', err);
+    }
+  };
+
+  const handleEditToggle = () => {
+    setEditing(!editing);
+  };
+
+  const handleProfilePictureChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const base64 = await convertToBase64(file);
+      setProfileData(prev => ({
+        ...prev,
+        profilePicture: base64
+      }));
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      await authService.updateProfile(profileData);
+      setEditing(false);
+      // Refresh user data
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to update profile:', error);
     }
   };
 
@@ -114,22 +148,40 @@ const Profile = () => {
     <div className="profile-container">
       <div className="profile-header">
         <div className="profile-info">
+          <div className="profile-picture-container">
+            {editing ? (
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleProfilePictureChange}
+                className="profile-picture-input"
+              />
+            ) : (
+              <img
+                src={user.profile_picture || '/default-avatar.png'}
+                alt="Profile"
+                className="profile-picture"
+              />
+            )}
+          </div>
           <div className="profile-text">
             <h1>{user.username}</h1>
-            <div className="profile-stats">
-              <div className="stat-item">
-                <span className="stat-value">{recentlyWatched.length}</span>
-                <span className="stat-label">Total Shows</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">
-                  {recentlyWatched.filter(show => 
-                    new Date(show.watched_at).getFullYear() === new Date().getFullYear()
-                  ).length}
-                </span>
-                <span className="stat-label">This Year</span>
-              </div>
-            </div>
+            {editing ? (
+              <textarea
+                value={profileData.description}
+                onChange={e => setProfileData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Add a description..."
+                className="description-input"
+              />
+            ) : (
+              <p className="description">{user.description || 'No description added yet.'}</p>
+            )}
+            <button 
+              className="edit-button"
+              onClick={editing ? handleSaveProfile : handleEditToggle}
+            >
+              {editing ? 'Save Profile' : 'Edit Profile'}
+            </button>
           </div>
         </div>
       </div>
