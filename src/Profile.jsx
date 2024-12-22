@@ -1,218 +1,227 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-
+import { useAuth } from './context/AuthContext';
+import { authService } from './services/auth';
 import './Profile.css';
-
-const TMDB_API_KEY = '7ceb22d73d90c1567ca77b9aedb51cd8';
+import { Link } from 'react-router-dom';
 
 const Profile = () => {
-  document.title = "Profile";
-  const [sessionId, setSessionId] = useState(null);
-  const [accountId, setAccountId] = useState(null);
-  const [watchlistTVShows, setWatchlistTVShows] = useState([]);
+  const { user } = useAuth();
+  const [watchlist, setWatchlist] = useState([]);
+  const [recentlyWatched, setRecentlyWatched] = useState([]);
+  const [currentlyWatching, setCurrentlyWatching] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const navigate = useNavigate();
-
-  const fetchRequestToken = async () => {
-    try {
-      const tokenResponse = await fetch(
-        `https://api.themoviedb.org/3/authentication/token/new?api_key=${TMDB_API_KEY}`
-      );
-      const tokenData = await tokenResponse.json();
-      if (tokenData.success) {
-
-        const requestToken = tokenData.request_token;
-        console.log("Request Token:", requestToken);
-        redirectToAuthPage(requestToken);
-      } else {
-        throw new Error("Failed to generate request token");
-      }
-    } catch (error) {
-      console.error("Error fetching request token:", error);
-    }
-  };
-
-  const redirectToAuthPage = (requestToken) => {
-    const redirectUri = encodeURIComponent("http://localhost:5173/profile");
-    const authUrl = `https://www.themoviedb.org/authenticate/${requestToken}?redirect_to=${redirectUri}`;
-    window.location.href = authUrl;
-  };
-
-  const getValidatedRequestToken = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('request_token');
-  };
-
-  const createSession = async (validatedRequestToken) => {
-    try {
-      const sessionResponse = await fetch(
-        `https://api.themoviedb.org/3/authentication/session/new?api_key=${TMDB_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ request_token: validatedRequestToken }),
-        }
-      );
-      const sessionData = await sessionResponse.json();
-      if (sessionData.success) {
-        const sessionId = sessionData.session_id;
-        setSessionId(sessionId);
-        localStorage.setItem('session_id', sessionId);
-        console.log("Session ID:", sessionId);
-        // Redirect to profile page after session creation
-        window.location.href = '/profile';
-      } else {
-        throw new Error("Failed to create session");
-      }
-    } catch (error) {
-      console.error("Error creating session:", error);
-    }
-  };
-
-  // Fetch the account ID using session ID
-  const fetchAccountId = async (sessionId) => {
-    try {
-      const accountResponse = await fetch(
-        `https://api.themoviedb.org/3/account?api_key=${TMDB_API_KEY}&session_id=${sessionId}`
-      );
-      const accountData = await accountResponse.json();
-      if (accountData.id) {
-        setAccountId(accountData.id);
-        console.log("Account ID:", accountData.id);
-      } else {
-        throw new Error("Failed to fetch account ID");
-      }
-    } catch (error) {
-      console.error("Error fetching account ID:", error);
-    }
-  };
-
-  // Fetch watchlist TV shows
-  const fetchWatchlistTVShows = async (accountId, sessionId) => {
-    try {
-      const response = await fetch(
-        `https://api.themoviedb.org/3/account/${accountId}/watchlist/tv?api_key=${TMDB_API_KEY}&session_id=${sessionId}&language=en-US&sort_by=created_at.asc`
-      );
-      const data = await response.json();
-      if (data.results) {
-        setWatchlistTVShows(data.results);
-        console.log("Watchlist TV Shows:", data.results);
-      } else {
-        throw new Error("Failed to fetch watchlist TV shows");
-      }
-    } catch (error) {
-      console.error("Error fetching watchlist TV shows:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle search input change
-  const handleSearchInput = (e) => {
-    setQuery(e.target.value);
-  };
-
-  // Perform search and update the state with results
-  const handleSearch = async (e) => {
-    if (e.key === 'Enter' || e.type === 'click') {
-      try {
-        const response = await fetch(
-          `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${query}&language=en-US`
-        );
-        const data = await response.json();
-        setSearchResults(data.results.filter((show) => show.poster_path));
-        navigate(`/search?query=${query}`);
-      } catch (error) {
-        console.error("Error fetching search results:", error);
-      }
-    }
-  };
-
-  const handleLogoClick = () => {
-    setQuery('');
-    setSearchResults([]);
-    setWatchlistTVShows([]);
-    navigate('/');
-  };
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const init = async () => {
-      const storedSessionId = localStorage.getItem('session_id');
-      if (storedSessionId) {
-        setSessionId(storedSessionId);
-      } else {
-        const validatedRequestToken = getValidatedRequestToken();
-        if (validatedRequestToken) {
-          await createSession(validatedRequestToken);
-        } else {
-          fetchRequestToken();
-        }
+    const fetchUserData = async () => {
+      if (!user) return;
+      
+      try {
+        const [watchlistData, watchedData, progressData] = await Promise.all([
+          authService.getWatchlist(),
+          authService.getWatchedShows(),
+          authService.getShowProgress()
+        ]);
+
+        setWatchlist(watchlistData);
+        setRecentlyWatched(watchedData.slice(0, 8));
+        setCurrentlyWatching(
+          progressData
+            .filter(show => show.status === 'watching')
+            .slice(0, 8)
+        );
+      } catch (err) {
+        console.error('Failed to fetch user data:', err);
+        setError('Failed to load profile data');
+      } finally {
+        setLoading(false);
       }
     };
-    init();
-  }, []);
 
-  useEffect(() => {
-    if (sessionId) {
-      fetchAccountId(sessionId);
-    }
-  }, [sessionId]);
+    fetchUserData();
+  }, [user]);
 
-  useEffect(() => {
-    if (accountId && sessionId) {
-      fetchWatchlistTVShows(accountId, sessionId);
+  const handleUpdateProgress = async (showId, season, episode) => {
+    try {
+      await authService.updateShowProgress(showId, season, episode);
+      // Refresh currently watching shows
+      const progressData = await authService.getShowProgress();
+      setCurrentlyWatching(
+        progressData
+          .filter(show => show.status === 'watching')
+          .slice(0, 8)
+      );
+    } catch (err) {
+      console.error('Failed to update progress:', err);
     }
-  }, [accountId, sessionId]);
+  };
+
+  const handleRemoveFromWatchlist = async (showId) => {
+    try {
+      await authService.removeFromWatchlist(showId);
+      setWatchlist(prev => prev.filter(show => show.show_id !== showId));
+    } catch (err) {
+      console.error('Failed to remove from watchlist:', err);
+    }
+  };
+
+  const handleMarkAsCompleted = async (showId) => {
+    try {
+      const show = currentlyWatching.find(s => s.show_id === showId);
+      if (show) {
+        await authService.markAsWatched(showId, show.show_title, show.poster_path);
+        setCurrentlyWatching(prev => prev.filter(s => s.show_id !== showId));
+        // Refresh recently watched
+        const watchedData = await authService.getWatchedShows();
+        setRecentlyWatched(watchedData.slice(0, 8));
+      }
+    } catch (err) {
+      console.error('Failed to mark as completed:', err);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="profile-container">
+        <div className="profile-header">
+          <h1>Please log in to view your profile</h1>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="profile-container">
+        <div className="profile-header">
+          <h1>Loading...</h1>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="profile-container">
+        <div className="profile-header">
+          <h1>Error: {error}</h1>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="profile">
-      {searchResults.length > 0 ? (
-        <div className="search-results">
-          {searchResults.map((show) => (
-            <Link to={`/show/${show.id}`} key={show.id} className="search-result-item">
-              <div className="result-content">
-                <div className="result-poster">
-                  <img
-                    src={`https://image.tmdb.org/t/p/w200${show.poster_path}`}
-                    alt={show.name}
-                    className="poster-img"
-                  />
-                </div>
-                <div className="result-info">
-                  <h3>{show.name}</h3>
-                  <p>
-                    <strong>First Air Date:</strong> {show.first_air_date || 'N/A'}
-                  </p>
-                  <p>
-                    <strong>Description:</strong> {show.overview || 'No description available.'}
-                  </p>
-                </div>
+    <div className="profile-container">
+      <div className="profile-header">
+        <div className="profile-info">
+          <div className="profile-text">
+            <h1>{user.username}</h1>
+            <div className="profile-stats">
+              <div className="stat-item">
+                <span className="stat-value">{recentlyWatched.length}</span>
+                <span className="stat-label">Total Shows</span>
               </div>
-            </Link>
-          ))}
+              <div className="stat-item">
+                <span className="stat-value">
+                  {recentlyWatched.filter(show => 
+                    new Date(show.watched_at).getFullYear() === new Date().getFullYear()
+                  ).length}
+                </span>
+                <span className="stat-label">This Year</span>
+              </div>
+            </div>
+          </div>
         </div>
-      ) : (
-        <>
-          <h1>Your Watchlist</h1>
-          {watchlistTVShows.length === 0 ? (
-            <p>No Shows in your watchlist.</p>
-          ) : (
-            <ul>
-              {watchlistTVShows.map((tvShow) => (
-                <li key={tvShow.id}>{tvShow.name}</li>
+      </div>
+
+      <div className="profile-sections">
+        {currentlyWatching.length > 0 && (
+          <div className="section-container">
+            <h2>Currently Watching</h2>
+            <div className="show-grid">
+              {currentlyWatching.map(show => (
+                <div key={show.show_id} className="show-item">
+                  <Link to={`/show/${show.show_id}`} className="show-link">
+                    <img src={`https://image.tmdb.org/t/p/w500${show.poster_path}`} alt={show.show_title} />
+                  </Link>
+                  <div className="show-item-overlay">
+                    <h3>{show.show_title}</h3>
+                    <div className="progress-controls">
+                      <div className="season-input">
+                        <label>Season</label>
+                        <input
+                          type="number"
+                          value={show.current_season || 1}
+                          onChange={(e) => handleUpdateProgress(show.show_id, parseInt(e.target.value), show.current_episode)}
+                          min="1"
+                        />
+                      </div>
+                      <div className="episode-input">
+                        <label>Episode</label>
+                        <input
+                          type="number"
+                          value={show.current_episode || 1}
+                          onChange={(e) => handleUpdateProgress(show.show_id, show.current_season, parseInt(e.target.value))}
+                          min="1"
+                        />
+                      </div>
+                    </div>
+                    <button 
+                      className="show-action-button"
+                      onClick={() => handleMarkAsCompleted(show.show_id)}
+                    >
+                      Mark Complete
+                    </button>
+                  </div>
+                </div>
               ))}
-            </ul>
-          )}
-        </>
-      )}
+            </div>
+          </div>
+        )}
 
+        {recentlyWatched.length > 0 && (
+          <div className="section-container">
+            <h2>Recently Watched</h2>
+            <div className="show-grid">
+              {recentlyWatched.map(show => (
+                <div key={show.show_id} className="show-item">
+                  <Link to={`/show/${show.show_id}`} className="show-link">
+                    <img src={`https://image.tmdb.org/t/p/w500${show.poster_path}`} alt={show.show_title} />
+                  </Link>
+                  <div className="show-item-overlay">
+                    <h3>{show.show_title}</h3>
+                    <p>Completed {new Date(show.watched_at).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
+        {watchlist.length > 0 && (
+          <div className="section-container">
+            <h2>Watchlist</h2>
+            <div className="show-grid">
+              {watchlist.map(show => (
+                <div key={show.show_id} className="show-item">
+                  <Link to={`/show/${show.show_id}`} className="show-link">
+                    <img src={`https://image.tmdb.org/t/p/w500${show.poster_path}`} alt={show.show_title} />
+                  </Link>
+                  <div className="show-item-overlay">
+                    <h3>{show.show_title}</h3>
+                    <button 
+                      className="show-action-button"
+                      onClick={() => handleRemoveFromWatchlist(show.show_id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

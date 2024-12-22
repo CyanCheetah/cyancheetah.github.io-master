@@ -14,3 +14,320 @@
   height: auto;
   border-radius: 8px;
 }
+
+.profile-container {
+  min-height: calc(100vh - 80px);
+  padding: 30px;
+  background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+  color: white;
+}
+
+.profile-header {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 25px;
+  border-radius: 15px;
+  margin-bottom: 30px;
+  backdrop-filter: blur(10px);
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-picture-container {
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.profile-picture {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-picture-input {
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.profile-text {
+  flex: 1;
+}
+
+.profile-text h1 {
+  color: white;
+  margin: 0 0 10px 0;
+}
+
+.description-input {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  resize: vertical;
+}
+
+.profile-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.show-section {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 15px;
+  padding: 25px;
+  margin-bottom: 30px;
+}
+
+.show-section:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.show-section:nth-child(even) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.show-grid {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scroll-behavior: smooth;
+}
+
+.show-item {
+  flex: 0 0 150px;
+  width: 150px;
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.show-item:hover {
+  transform: scale(1.05);
+}
+
+.show-item img {
+  width: 100%;
+  height: 225px;
+  object-fit: cover;
+  display: block;
+  border-radius: 8px;
+}
+
+.show-item-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.9);
+  padding: 15px;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.show-item:hover .show-item-overlay {
+  transform: translateY(0);
+}
+
+.show-item-overlay h3 {
+  color: white;
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+}
+
+.show-item-overlay p {
+  color: #888;
+  margin: 5px 0;
+  font-size: 0.8rem;
+}
+
+.show-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+
+.watched-stats {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+  color: #888;
+}
+
+.show-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.show-action-button {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.show-action-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.episode-update {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.episode-update input {
+  width: 40px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  color: white;
+  text-align: center;
+}
+
+/* Scrollbar styling */
+.show-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.show-grid::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.show-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.show-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@media (max-width: 768px) {
+  .profile-info {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .show-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .show-item {
+    width: 120px;
+  }
+
+  .show-item img {
+    height: 180px;
+  }
+}
+
+.profile-stats {
+  display: flex;
+  gap: 30px;
+  margin: 15px 0;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #888;
+}
+
+.section-container {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 25px;
+  margin-bottom: 30px;
+}
+
+.section-container h2 {
+  color: white;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.progress-controls {
+  display: flex;
+  gap: 15px;
+  margin: 10px 0;
+}
+
+.season-input,
+.episode-input {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.season-input label,
+.episode-input label {
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.season-input input,
+.episode-input input {
+  width: 50px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: white;
+  text-align: center;
+}
+
+/* Update scrollbar styling */
+.show-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.show-grid::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.show-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.show-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
