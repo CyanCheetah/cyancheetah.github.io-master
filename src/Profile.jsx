@@ -95,8 +95,8 @@ const Profile = () => {
   const handleUpdateProgress = async (showId, season, episode) => {
     try {
       // Validate inputs
-      const newSeason = parseInt(season) || 1;
-      const newEpisode = parseInt(episode) || 1;
+      const newSeason = Math.max(1, parseInt(season) || 1);
+      const newEpisode = Math.max(1, parseInt(episode) || 1);
 
       // First update the local state immediately for better UX
       setCurrentlyWatching(prev =>
@@ -351,7 +351,6 @@ const Profile = () => {
                           type="number"
                           value={show.current_season || 1}
                           onChange={(e) => {
-                            e.preventDefault();
                             const newValue = Math.max(1, parseInt(e.target.value) || 1);
                             handleUpdateProgress(show.show_id, newValue, show.current_episode || 1);
                           }}
@@ -365,7 +364,6 @@ const Profile = () => {
                           type="number"
                           value={show.current_episode || 1}
                           onChange={(e) => {
-                            e.preventDefault();
                             const newValue = Math.max(1, parseInt(e.target.value) || 1);
                             handleUpdateProgress(show.show_id, show.current_season || 1, newValue);
                           }}

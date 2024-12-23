@@ -1,4 +1,3 @@
-// SearchResults.jsx
 import React, { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import './SearchResults.css';
@@ -7,13 +6,51 @@ const SearchResults = () => {
   const location = useLocation();
   const results = location.state?.results || [];
   const query = location.state?.query || '';
-  const [sourceFilter, setSourceFilter] = useState('all'); // 'all', 'tv', or 'anime'
+  const [sourceFilter, setSourceFilter] = useState('all');
 
-  // Filter results based on source
-  const filteredResults = results.filter(item => {
+  // Remove duplicates and Jikan entries if they exist in TMDB
+  const processedResults = results.reduce((acc, current) => {
+    // Check if this is a TMDB entry
+    if (current.type === 'tv') {
+      // If it's a TMDB show, check if it's an anime
+      const isAnime = current.origin_country?.includes('JP') || 
+                     current.original_language === 'ja' ||
+                     current.genres?.some(g => g.name === 'Animation');
+      
+      if (isAnime) {
+        current.isAnime = true; // Mark as anime for filtering
+      }
+      acc.push(current);
+    } else if (current.type === 'anime') {
+      // For Jikan entries, check if there's a TMDB equivalent
+      const tmdbEquivalent = acc.find(item => 
+        item.name?.toLowerCase() === current.title?.toLowerCase() ||
+        item.original_name?.toLowerCase() === current.title?.toLowerCase()
+      );
+      
+      // Only add if there's no TMDB equivalent
+      if (!tmdbEquivalent) {
+        acc.push(current);
+      }
+    }
+    return acc;
+  }, []);
+
+  // Filter results based on source and anime status
+  const filteredResults = processedResults.filter(item => {
     if (sourceFilter === 'all') return true;
-    return item.type === sourceFilter;
+    if (sourceFilter === 'tv') return item.type === 'tv' && !item.isAnime;
+    if (sourceFilter === 'anime') return item.type === 'anime' || (item.type === 'tv' && item.isAnime);
+    return true;
   });
+
+  // Helper function to determine the correct link for each show
+  const getShowLink = (item) => {
+    if (item.type === 'anime') {
+      return `/anime/${item.id}`; // Route to AnimeDetails for Jikan results
+    }
+    return `/show/${item.id}`; // Route to ShowDetails for TMDB results
+  };
 
   if (!query) {
     return (
@@ -34,19 +71,19 @@ const SearchResults = () => {
             className={`filter-button ${sourceFilter === 'all' ? 'active' : ''}`}
             onClick={() => setSourceFilter('all')}
           >
-            All Sources
+            All Shows
           </button>
           <button 
             className={`filter-button ${sourceFilter === 'tv' ? 'active' : ''}`}
             onClick={() => setSourceFilter('tv')}
           >
-            TMDB Only
+            TV Shows
           </button>
           <button 
             className={`filter-button ${sourceFilter === 'anime' ? 'active' : ''}`}
             onClick={() => setSourceFilter('anime')}
           >
-            MAL Only
+            Anime Only
           </button>
         </div>
       </div>
@@ -59,7 +96,7 @@ const SearchResults = () => {
         <div className="results-grid">
           {filteredResults.map(item => (
             <div key={item.id} className="result-card" data-source={item.type}>
-              <Link to={item.type === 'tv' ? `/show/${item.id}` : `/anime/${item.id}`}>
+              <Link to={getShowLink(item)}>
                 <img 
                   src={
                     item.type === 'tv' 
@@ -67,14 +104,15 @@ const SearchResults = () => {
                       : item.image_url
                   } 
                   alt={item.type === 'tv' ? item.name : item.title}
-                  onError={(e) => {
-                    e.target.src = '/placeholder-poster.png';
-                  }}
                 />
                 <div className="result-info">
                   <h3>{item.type === 'tv' ? item.name : item.title}</h3>
-                  <p>{item.year || (item.first_air_date || '').split('-')[0]}</p>
-                  <span className="result-type">{item.type.toUpperCase()}</span>
+                  <p>{item.type === 'tv' 
+                        ? (item.first_air_date || '').split('-')[0] 
+                        : item.year}</p>
+                  <span className="result-type">
+                    {item.isAnime ? 'ANIME' : item.type.toUpperCase()}
+                  </span>
                 </div>
               </Link>
             </div>

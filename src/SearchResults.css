@@ -164,9 +164,9 @@
   bottom: 0;
   background: radial-gradient(
     circle at center,
-    rgba(255, 140, 0, 0.2) 0%,
-    rgba(255, 140, 0, 0.15) 50%,
-    rgba(255, 140, 0, 0.1) 100%
+    rgba(14, 154, 167, 0.2) 0%,
+    rgba(11, 119, 131, 0.15) 50%,
+    rgba(9, 105, 223, 0.1) 100%
   );
   filter: blur(10px);
   pointer-events: none;
