@@ -1,68 +1,85 @@
 // SearchResults.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import './Home.css';
-
-const TMDB_API_KEY = '7ceb22d73d90c1567ca77b9aedb51cd8';
+import './SearchResults.css';
 
 const SearchResults = () => {
   const location = useLocation();
-  const query = new URLSearchParams(location.search).get('query');
-  const [searchResults, setSearchResults] = useState([]);
+  const results = location.state?.results || [];
+  const query = location.state?.query || '';
+  const [sourceFilter, setSourceFilter] = useState('all'); // 'all', 'tv', or 'anime'
 
-  useEffect(() => {//i hate javascript
-    if (query) {
-      const fetchSearchResults = async () => {
-        try {
-          const response = await fetch(
-            `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${query}&language=en-US`
-          );
-          const data = await response.json();
-          setSearchResults(data.results.filter((show) => show.poster_path));
-        } catch (error) {
-          console.error('Error fetching search results:', error);
-        }
-      };
+  // Filter results based on source
+  const filteredResults = results.filter(item => {
+    if (sourceFilter === 'all') return true;
+    return item.type === sourceFilter;
+  });
 
-      fetchSearchResults();
-    }
-  }, [query]);
-
-  const truncateTitle = (title, length = 25) => {
-    return title.length > length ? title.substring(0, length) + '...' : title;
-  };
+  if (!query) {
+    return (
+      <div className="search-results-container">
+        <div className="no-results">
+          Please enter a search term to find shows
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="search-results-container">
-      <h2 className="search-res"><strong>Search Results For:</strong> {query}</h2>
+      <div className="search-header">
+        <h2>Search Results for "{query}"</h2>
+        <div className="source-filter">
+          <button 
+            className={`filter-button ${sourceFilter === 'all' ? 'active' : ''}`}
+            onClick={() => setSourceFilter('all')}
+          >
+            All Sources
+          </button>
+          <button 
+            className={`filter-button ${sourceFilter === 'tv' ? 'active' : ''}`}
+            onClick={() => setSourceFilter('tv')}
+          >
+            TMDB Only
+          </button>
+          <button 
+            className={`filter-button ${sourceFilter === 'anime' ? 'active' : ''}`}
+            onClick={() => setSourceFilter('anime')}
+          >
+            MAL Only
+          </button>
+        </div>
+      </div>
 
-      {searchResults.length > 0 ? (
-        <div className="search-results">
-          {searchResults.map((show) => (
-            <Link to={`/show/${show.id}`} key={show.id} className="search-result-item">
-              <div className="result-content">
-                <div className="result-poster">
-                  <img
-                    src={`https://image.tmdb.org/t/p/w200${show.poster_path}`}
-                    alt={show.name}
-                    className="poster-img"
-                  />
-                </div>
-                <div className="result-info">
-                  <h3>{truncateTitle(show.name)}</h3>
-                  <p>
-                    <strong>First Air Date:</strong> {show.first_air_date || 'N/A'}
-                  </p>
-                  <p>
-                    <strong>Description:</strong> {show.overview || 'No description available.'}
-                  </p>
-                </div>
-              </div>
-            </Link>
-          ))}
+      {filteredResults.length === 0 ? (
+        <div className="no-results">
+          No results found for "{query}"
         </div>
       ) : (
-        <p>No results found.</p>
+        <div className="results-grid">
+          {filteredResults.map(item => (
+            <div key={item.id} className="result-card" data-source={item.type}>
+              <Link to={item.type === 'tv' ? `/show/${item.id}` : `/anime/${item.id}`}>
+                <img 
+                  src={
+                    item.type === 'tv' 
+                      ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+                      : item.image_url
+                  } 
+                  alt={item.type === 'tv' ? item.name : item.title}
+                  onError={(e) => {
+                    e.target.src = '/placeholder-poster.png';
+                  }}
+                />
+                <div className="result-info">
+                  <h3>{item.type === 'tv' ? item.name : item.title}</h3>
+                  <p>{item.year || (item.first_air_date || '').split('-')[0]}</p>
+                  <span className="result-type">{item.type.toUpperCase()}</span>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );

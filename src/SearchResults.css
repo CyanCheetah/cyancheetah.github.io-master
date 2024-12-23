@@ -1,0 +1,224 @@
+.search-results-container {
+  padding: 80px 40px 40px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%);
+  color: #fff;
+}
+
+.search-results-container h2 {
+  text-align: center;
+  color: #4fd1c5;
+  font-size: 2rem;
+  margin-bottom: 40px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.result-card {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  padding: 5px;
+}
+
+.result-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(79, 209, 197, 0.2);
+}
+
+.result-card a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.result-card img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.3s ease;
+  position: relative;
+  z-index: 0;
+}
+
+.result-card:hover img {
+  opacity: 0.8;
+}
+
+.result-info {
+  padding: 15px;
+  background: linear-gradient(
+    to top,
+    rgba(44, 62, 80, 0.95) 0%,
+    rgba(44, 62, 80, 0.85) 100%
+  );
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.result-card:hover .result-info {
+  transform: translateY(0);
+}
+
+.result-info h3 {
+  color: #fff;
+  font-size: 1.1rem;
+  margin: 0 0 8px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-info p {
+  color: #4fd1c5;
+  font-size: 0.9rem;
+  margin: 0 0 8px 0;
+}
+
+.result-type {
+  display: inline-block;
+  padding: 4px 8px;
+  background: rgba(79, 209, 197, 0.2);
+  color: #4fd1c5;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #4fd1c5;
+}
+
+/* No results state */
+.no-results {
+  text-align: center;
+  padding: 40px;
+  color: #4fd1c5;
+  font-size: 1.2rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .search-results-container {
+    padding: 60px 20px 20px;
+  }
+
+  .search-results-container h2 {
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+  }
+
+  .results-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+  }
+
+  .result-card img {
+    height: 225px;
+  }
+
+  .result-info {
+    padding: 10px;
+  }
+
+  .result-info h3 {
+    font-size: 1rem;
+  }
+}
+
+/* Hover effects for touch devices */
+@media (hover: none) {
+  .result-info {
+    transform: translateY(0);
+    background: rgba(44, 62, 80, 0.9);
+  }
+
+  .result-card:hover {
+    transform: none;
+  }
+}
+
+/* Add source-specific background overlays */
+.result-card[data-source="tv"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 140, 0, 0.2) 0%,
+    rgba(255, 140, 0, 0.15) 50%,
+    rgba(255, 140, 0, 0.1) 100%
+  );
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.result-card[data-source="anime"]::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(0, 120, 255, 0.2) 0%,
+    rgba(0, 120, 255, 0.15) 50%,
+    rgba(0, 120, 255, 0.1) 100%
+  );
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.search-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.source-filter {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.filter-button {
+  padding: 8px 16px;
+  border: 2px solid #4fd1c5;
+  background: transparent;
+  color: #4fd1c5;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.filter-button:hover {
+  background: rgba(79, 209, 197, 0.1);
+}
+
+.filter-button.active {
+  background: #4fd1c5;
+  color: white;
+}

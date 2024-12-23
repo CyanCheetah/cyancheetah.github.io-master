@@ -94,28 +94,56 @@ const Profile = () => {
 
   const handleUpdateProgress = async (showId, season, episode) => {
     try {
+      // Validate inputs
+      const newSeason = parseInt(season) || 1;
+      const newEpisode = parseInt(episode) || 1;
+
+      // First update the local state immediately for better UX
+      setCurrentlyWatching(prev =>
+        prev.map(show =>
+          show.show_id === showId
+            ? { 
+                ...show, 
+                current_season: newSeason, 
+                current_episode: newEpisode 
+              }
+            : show
+        )
+      );
+
+      // Then update the database
       const { error } = await supabase
         .from('show_status')
         .update({
-          current_season: season,
-          current_episode: episode
+          current_season: newSeason,
+          current_episode: newEpisode,
+          updated_at: new Date().toISOString()
         })
         .eq('show_id', showId)
         .eq('user_id', user.id)
         .eq('status', 'watching');
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      // Update local state
-      setCurrentlyWatching(prev =>
-        prev.map(show =>
-          show.show_id === showId
-            ? { ...show, current_season: season, current_episode: episode }
-            : show
-        )
-      );
     } catch (err) {
       console.error('Failed to update progress:', err);
+      // Revert the local state if the update failed
+      const { data } = await supabase
+        .from('show_status')
+        .select('*')
+        .eq('show_id', showId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (data) {
+        setCurrentlyWatching(prev =>
+          prev.map(show =>
+            show.show_id === showId ? { ...show, ...data } : show
+          )
+        );
+      }
     }
   };
 
@@ -315,14 +343,20 @@ const Profile = () => {
                   </Link>
                   <div className="show-item-overlay">
                     <h3>{show.show_title}</h3>
+                    <p>Season {show.current_season || 1} Episode {show.current_episode || 1}</p>
                     <div className="progress-controls">
                       <div className="season-input">
                         <label>Season</label>
                         <input
                           type="number"
                           value={show.current_season || 1}
-                          onChange={(e) => handleUpdateProgress(show.show_id, parseInt(e.target.value), show.current_episode)}
+                          onChange={(e) => {
+                            e.preventDefault();
+                            const newValue = Math.max(1, parseInt(e.target.value) || 1);
+                            handleUpdateProgress(show.show_id, newValue, show.current_episode || 1);
+                          }}
                           min="1"
+                          onClick={(e) => e.target.select()}
                         />
                       </div>
                       <div className="episode-input">
@@ -330,8 +364,13 @@ const Profile = () => {
                         <input
                           type="number"
                           value={show.current_episode || 1}
-                          onChange={(e) => handleUpdateProgress(show.show_id, show.current_season, parseInt(e.target.value))}
+                          onChange={(e) => {
+                            e.preventDefault();
+                            const newValue = Math.max(1, parseInt(e.target.value) || 1);
+                            handleUpdateProgress(show.show_id, show.current_season || 1, newValue);
+                          }}
                           min="1"
+                          onClick={(e) => e.target.select()}
                         />
                       </div>
                     </div>
@@ -387,7 +426,7 @@ const Profile = () => {
                   </Link>
                   <div className="show-item-overlay">
                     <h3>{show.show_title}</h3>
-                    <p>Completed {new Date(show.watched_at).toLocaleDateString()}</p>
+                    <p>Completed {new Date().toLocaleDateString()}</p>
                   </div>
                 </div>
               ))}

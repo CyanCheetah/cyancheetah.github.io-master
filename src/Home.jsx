@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import './Home.css';
 import { useAuth } from './context/AuthContext.jsx';
 import { supabase } from './supabaseClient.jsx';
+import { animeService } from './services/animeService';
 
 const TMDB_API_KEY = '7ceb22d73d90c1567ca77b9aedb51cd8';
 
@@ -15,6 +16,7 @@ const Home = () => {
   const navigate = useNavigate(); // For programmatic navigation
   const { user } = useAuth();
   const [profileData, setProfileData] = useState(null);
+  const [combinedResults, setCombinedResults] = useState([]);
 
   useEffect(() => {
     const fetchRandomShows = async () => {
@@ -62,14 +64,33 @@ const Home = () => {
   // Navigate to the search results page when searching
   const handleSearch = async (e) => {
     if (e.key === 'Enter' || e.type === 'click') {
-      const response = await fetch(
-        `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${query}&language=en-US`
-      );
-      const data = await response.json();
-      setSearchResults(data.results); // Store the search results
+      try {
+        // Fetch from TMDB
+        const tmdbResponse = await fetch(
+          `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${query}&language=en-US`
+        );
+        const tmdbData = await tmdbResponse.json();
+        const tmdbResults = tmdbData.results.map(show => ({
+          ...show,
+          type: 'tv'
+        }));
 
-      if (data.results.length > 0) {
-        navigate(`/show/${data.results[0].id}`); // Navigate to the first result
+        // Fetch from MAL
+        const malResults = await animeService.searchAnime(query);
+
+        // Combine results
+        const combined = [...tmdbResults, ...malResults];
+        setCombinedResults(combined);
+
+        // Navigate to search results with both types
+        navigate('/search', { 
+          state: { 
+            results: combined,
+            query: query 
+          }
+        });
+      } catch (error) {
+        console.error('Search error:', error);
       }
     }
   };

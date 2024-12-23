@@ -11,13 +11,13 @@ import ShowDetails from './ShowDetails.jsx';
 import Profile from './Profile.jsx';
 import Popular from './Popular.jsx';
 import About from './About.jsx';
-import TopRated from './TopRated.jsx';
 import SearchResults from './SearchResults.jsx'; // Import the SearchResults component
 import './Home.css';
 import Login from './Login.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import ActorPage from './ActorPage.jsx';
+import { animeService } from './services/animeService';
 
 const TMDB_API_KEY = '7ceb22d73d90c1567ca77b9aedb51cd8';
 
@@ -43,10 +43,37 @@ const TopBar = ({ query, setQuery }) => {
     setQuery(e.target.value);
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     if (e.key === 'Enter' || e.type === 'click') {
-      navigate(`/search?query=${query}`);
-      setIsMenuOpen(false);
+      try {
+        // Fetch from TMDB
+        const tmdbResponse = await fetch(
+          `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${query}&language=en-US`
+        );
+        const tmdbData = await tmdbResponse.json();
+        const tmdbResults = tmdbData.results.map(show => ({
+          ...show,
+          type: 'tv'
+        }));
+
+        // Fetch from MAL
+        const malResults = await animeService.searchAnime(query);
+
+        // Combine results
+        const combined = [...tmdbResults, ...malResults];
+
+        // Navigate to search results with both types
+        navigate('/search', { 
+          state: { 
+            results: combined,
+            query: query 
+          }
+        });
+        
+        setIsMenuOpen(false);
+      } catch (error) {
+        console.error('Search error:', error);
+      }
     }
   };
 
@@ -79,11 +106,9 @@ const TopBar = ({ query, setQuery }) => {
         </button>
         <div className={`nav-menu ${isMenuOpen ? 'active' : ''}`}>
           <Link to="/popular" className="button-30" onClick={() => navigate('/popular')}>
-            Popular
+            Shows
           </Link>
-          <Link to="/top-rated" className="button-30" onClick={() => navigate('/top-rated')}>
-            Top Rated
-          </Link>
+
           {user ? (
             <>
               <Link to="/profile" className="button-30" onClick={() => navigate('/profile')}>
@@ -146,7 +171,6 @@ function Main() {
             />
             <Route path="/popular" element={<Popular />} />
             <Route path="/about" element={<About />} />
-            <Route path="/top-rated" element={<TopRated />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/login" element={<Login />} />
             <Route path="/actor/:id" element={<ActorPage />} />
