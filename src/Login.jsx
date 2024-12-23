@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext.jsx';
 import './Login.css';
 
 const Login = () => {
@@ -19,12 +19,19 @@ const Login = () => {
     setError('');
     
     try {
+      if (!formData.email || !formData.password) {
+        setError('Please fill in all fields');
+        return;
+      }
+
       if (isLogin) {
-        console.log('Attempting login with:', { email: formData.email });
         await login(formData.email, formData.password);
       } else {
-        console.log('Attempting registration with:', { email: formData.email, username: formData.username });
-        await register(formData.username, formData.email, formData.password);
+        if (!formData.username) {
+          setError('Username is required');
+          return;
+        }
+        await register(formData.email, formData.password, formData.username);
       }
       navigate('/profile');
     } catch (error) {

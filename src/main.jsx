@@ -15,7 +15,7 @@ import TopRated from './TopRated.jsx';
 import SearchResults from './SearchResults.jsx'; // Import the SearchResults component
 import './Home.css';
 import Login from './Login.jsx';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { PrivateRoute } from './components/PrivateRoute';
 import ActorPage from './ActorPage.jsx';
 

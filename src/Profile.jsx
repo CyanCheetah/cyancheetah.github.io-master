@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext.jsx';
 import { authService } from './services/auth';
 import './Profile.css';
 import { Link } from 'react-router-dom';
+import { supabase } from './supabaseClient.jsx';
 
 const Profile = () => {
   const { user } = useAuth();
@@ -13,8 +14,9 @@ const Profile = () => {
   const [error, setError] = useState(null);
   const [editing, setEditing] = useState(false);
   const [profileData, setProfileData] = useState({
-    description: user?.description || '',
-    profilePicture: user?.profile_picture || null
+    username: '',
+    description: '',
+    profile_picture: null
   });
 
   useEffect(() => {
@@ -22,19 +24,38 @@ const Profile = () => {
       if (!user) return;
       
       try {
-        const [watchlistData, watchedData, progressData] = await Promise.all([
-          authService.getWatchlist(),
-          authService.getWatchedShows(),
-          authService.getShowProgress()
-        ]);
-
+        // Get watchlist (plan_to_watch)
+        const { data: watchlistData, error: watchlistError } = await supabase
+          .from('show_status')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'plan_to_watch');
+        
+        if (watchlistError) throw watchlistError;
         setWatchlist(watchlistData);
-        setRecentlyWatched(watchedData.slice(0, 8));
-        setCurrentlyWatching(
-          progressData
-            .filter(show => show.status === 'watching')
-            .slice(0, 8)
-        );
+
+        // Get currently watching shows
+        const { data: watchingData, error: watchingError } = await supabase
+          .from('show_status')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'watching');
+
+        if (watchingError) throw watchingError;
+        setCurrentlyWatching(watchingData);
+
+        // Get completed shows
+        const { data: completedData, error: completedError } = await supabase
+          .from('show_status')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(8);
+
+        if (completedError) throw completedError;
+        setRecentlyWatched(completedData);
+
       } catch (err) {
         console.error('Failed to fetch user data:', err);
         setError('Failed to load profile data');
@@ -46,15 +67,52 @@ const Profile = () => {
     fetchUserData();
   }, [user]);
 
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) throw error;
+        setProfileData({
+          username: data.username || '',
+          description: data.description || '',
+          profile_picture: data.profile_picture || null
+        });
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    };
+
+    fetchProfileData();
+  }, [user]);
+
   const handleUpdateProgress = async (showId, season, episode) => {
     try {
-      await authService.updateShowProgress(showId, season, episode);
-      // Refresh currently watching shows
-      const progressData = await authService.getShowProgress();
-      setCurrentlyWatching(
-        progressData
-          .filter(show => show.status === 'watching')
-          .slice(0, 8)
+      const { error } = await supabase
+        .from('show_status')
+        .update({
+          current_season: season,
+          current_episode: episode
+        })
+        .eq('show_id', showId)
+        .eq('user_id', user.id)
+        .eq('status', 'watching');
+
+      if (error) throw error;
+
+      // Update local state
+      setCurrentlyWatching(prev =>
+        prev.map(show =>
+          show.show_id === showId
+            ? { ...show, current_season: season, current_episode: episode }
+            : show
+        )
       );
     } catch (err) {
       console.error('Failed to update progress:', err);
@@ -63,7 +121,14 @@ const Profile = () => {
 
   const handleRemoveFromWatchlist = async (showId) => {
     try {
-      await authService.removeFromWatchlist(showId);
+      const { error } = await supabase
+        .from('show_status')
+        .delete()
+        .eq('show_id', showId)
+        .eq('user_id', user.id)
+        .eq('status', 'plan_to_watch');
+
+      if (error) throw error;
       setWatchlist(prev => prev.filter(show => show.show_id !== showId));
     } catch (err) {
       console.error('Failed to remove from watchlist:', err);
@@ -74,14 +139,29 @@ const Profile = () => {
     try {
       const show = currentlyWatching.find(s => s.show_id === showId);
       if (show) {
-        await authService.markAsWatched(showId, show.show_title, show.poster_path);
-        // Remove from currently watching
+        // Update status to completed
+        const { error: updateError } = await supabase
+          .from('show_status')
+          .update({ status: 'completed' })
+          .eq('show_id', showId)
+          .eq('user_id', user.id);
+
+        if (updateError) throw updateError;
+
+        // Remove from currently watching list
         setCurrentlyWatching(prev => prev.filter(s => s.show_id !== showId));
-        // Remove from progress
-        await authService.removeFromProgress(showId);
+
         // Refresh recently watched
-        const watchedData = await authService.getWatchedShows();
-        setRecentlyWatched(watchedData.slice(0, 8));
+        const { data: completedData, error: fetchError } = await supabase
+          .from('show_status')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(8);
+
+        if (fetchError) throw fetchError;
+        setRecentlyWatched(completedData);
       }
     } catch (err) {
       console.error('Failed to mark as completed:', err);
@@ -95,20 +175,57 @@ const Profile = () => {
   const handleProfilePictureChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const base64 = await convertToBase64(file);
-      setProfileData(prev => ({
-        ...prev,
-        profilePicture: base64
-      }));
+      try {
+        // Check file size (limit to 1MB)
+        if (file.size > 1024 * 1024) {
+          throw new Error('Image size should be less than 1MB');
+        }
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const base64String = event.target.result;
+          setProfileData(prev => ({
+            ...prev,
+            profile_picture: base64String
+          }));
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Error handling profile picture:', error);
+        alert(error.message);
+      }
     }
   };
 
   const handleSaveProfile = async () => {
     try {
-      await authService.updateProfile(profileData);
+      // First, update the profile in the profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          username: profileData.username,
+          description: profileData.description,
+          profile_picture: profileData.profile_picture,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (profileError) throw profileError;
       setEditing(false);
-      // Refresh user data
-      window.location.reload();
+
+      // Refresh the profile data
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      setProfileData({
+        username: data.username || '',
+        description: data.description || '',
+        profile_picture: data.profile_picture || null
+      });
     } catch (error) {
       console.error('Failed to update profile:', error);
     }
@@ -158,14 +275,14 @@ const Profile = () => {
               />
             ) : (
               <img
-                src={user.profile_picture || '/default-avatar.png'}
+                src={profileData.profile_picture || '/default-avatar.png'}
                 alt="Profile"
                 className="profile-picture"
               />
             )}
           </div>
           <div className="profile-text">
-            <h1>{user.username}</h1>
+            <h1>{profileData.username}</h1>
             {editing ? (
               <textarea
                 value={profileData.description}
@@ -174,7 +291,7 @@ const Profile = () => {
                 className="description-input"
               />
             ) : (
-              <p className="description">{user.description || 'No description added yet.'}</p>
+              <p className="description">{profileData.description || 'No description added yet.'}</p>
             )}
             <button 
               className="edit-button"
@@ -187,11 +304,11 @@ const Profile = () => {
       </div>
 
       <div className="profile-sections">
-        {currentlyWatching.length > 0 && (
-          <div className="section-container">
-            <h2>Currently Watching</h2>
-            <div className="show-grid">
-              {currentlyWatching.map(show => (
+        <div className="section-container">
+          <h2>Currently Watching</h2>
+          <div className="show-grid">
+            {currentlyWatching.length > 0 ? (
+              currentlyWatching.map(show => (
                 <div key={show.show_id} className="show-item">
                   <Link to={`/show/${show.show_id}`} className="show-link">
                     <img src={`https://image.tmdb.org/t/p/w500${show.poster_path}`} alt={show.show_title} />
@@ -226,10 +343,38 @@ const Profile = () => {
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              ))
+            ) : (
+              <p className="empty-message">No shows currently watching</p>
+            )}
           </div>
-        )}
+        </div>
+
+        <div className="section-container">
+          <h2>Watchlist</h2>
+          <div className="show-grid">
+            {watchlist.length > 0 ? (
+              watchlist.map(show => (
+                <div key={show.show_id} className="show-item">
+                  <Link to={`/show/${show.show_id}`} className="show-link">
+                    <img src={`https://image.tmdb.org/t/p/w500${show.poster_path}`} alt={show.show_title} />
+                  </Link>
+                  <div className="show-item-overlay">
+                    <h3>{show.show_title}</h3>
+                    <button 
+                      className="show-action-button"
+                      onClick={() => handleRemoveFromWatchlist(show.show_id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="empty-message">No shows in watchlist</p>
+            )}
+          </div>
+        </div>
 
         {recentlyWatched.length > 0 && (
           <div className="section-container">
@@ -243,30 +388,6 @@ const Profile = () => {
                   <div className="show-item-overlay">
                     <h3>{show.show_title}</h3>
                     <p>Completed {new Date(show.watched_at).toLocaleDateString()}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {watchlist.length > 0 && (
-          <div className="section-container">
-            <h2>Watchlist</h2>
-            <div className="show-grid">
-              {watchlist.map(show => (
-                <div key={show.show_id} className="show-item">
-                  <Link to={`/show/${show.show_id}`} className="show-link">
-                    <img src={`https://image.tmdb.org/t/p/w500${show.poster_path}`} alt={show.show_title} />
-                  </Link>
-                  <div className="show-item-overlay">
-                    <h3>{show.show_title}</h3>
-                    <button 
-                      className="show-action-button"
-                      onClick={() => handleRemoveFromWatchlist(show.show_id)}
-                    >
-                      Remove
-                    </button>
                   </div>
                 </div>
               ))}

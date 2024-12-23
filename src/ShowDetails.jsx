@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import './ShowDetails.css';
 import { useAuth } from './context/AuthContext';
 import { authService } from './services/auth';
+import { supabase } from './supabaseClient.jsx';
 // ADD COMMENTS!!!!!!
 const TMDB_API_KEY = '7ceb22d73d90c1567ca77b9aedb51cd8';
 
@@ -218,26 +219,55 @@ function ShowDetails() {
     }
 
     try {
+      if (!newStatus) return;
+
+      // First, delete any existing status for this show
+      const { error: deleteError } = await supabase
+        .from('show_status')
+        .delete()
+        .eq('show_id', showDetails.id)
+        .eq('user_id', user.id);
+
+      if (deleteError) throw deleteError;
+
+      // Then insert the new status
       await authService.updateShowStatus(
         showDetails.id,
         showDetails.name,
         showDetails.poster_path,
         newStatus,
-        score,
+        score || 0,
         showProgress?.current_episode || 0
       );
       setStatus(newStatus);
-      
-      // Remove from other lists when status changes
-      if (newStatus === 'watching') {
-        await authService.removeFromWatchlist(showDetails.id);
-        await authService.removeFromWatched(showDetails.id);
-      } else if (newStatus === 'completed') {
-        await authService.removeFromWatchlist(showDetails.id);
-        await authService.removeFromProgress(showDetails.id);
-      } else if (newStatus === 'plan_to_watch') {
-        await authService.removeFromProgress(showDetails.id);
-        await authService.removeFromWatched(showDetails.id);
+
+      // Handle other lists
+      if (status !== newStatus) {
+        if (newStatus === 'watching') {
+          // Remove from watchlist and completed
+          await authService.removeFromWatchlist(showDetails.id);
+          const { error } = await supabase
+            .from('show_status')
+            .delete()
+            .eq('show_id', showDetails.id)
+            .eq('user_id', user.id)
+            .eq('status', 'completed');
+          if (error) throw error;
+        } else if (newStatus === 'completed') {
+          // Remove from watching and watchlist
+          await authService.removeFromProgress(showDetails.id);
+          await authService.removeFromWatchlist(showDetails.id);
+        } else if (newStatus === 'plan_to_watch') {
+          // Remove from watching and completed
+          await authService.removeFromProgress(showDetails.id);
+          const { error } = await supabase
+            .from('show_status')
+            .delete()
+            .eq('show_id', showDetails.id)
+            .eq('user_id', user.id)
+            .eq('status', 'completed');
+          if (error) throw error;
+        }
       }
     } catch (error) {
       console.error('Error updating status:', error);

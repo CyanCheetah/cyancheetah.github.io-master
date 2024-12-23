@@ -11,6 +11,8 @@ const Popular = () => {
   const [yearRange, setYearRange] = useState(2000);
   const [language, setLanguage] = useState('en-US');
   const [sortBy, setSortBy] = useState('popularity.desc');
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchGenres = async () => {
@@ -42,6 +44,40 @@ const Popular = () => {
       console.error('Error fetching shows:', error);
     }
   };
+
+  const loadMoreShows = async () => {
+    if (loading) return;
+    setLoading(true);
+    
+    try {
+      const genreParam = selectedGenre ? `&with_genres=${selectedGenre}` : '';
+      const yearParam = `&first_air_date.gte=${yearRange}-01-01`;
+      const response = await fetch(
+        `https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_API_KEY}&language=${language}&sort_by=${sortBy}&page=${page + 1}${genreParam}${yearParam}`
+      );
+      const data = await response.json();
+      setShows(prev => [...prev, ...data.results]);
+      setPage(prev => prev + 1);
+    } catch (error) {
+      console.error('Error loading more shows:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop
+        === document.documentElement.offsetHeight
+      ) {
+        loadMoreShows();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [page, loading]);
 
   return (
     <div className="top-rated-container">

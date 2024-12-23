@@ -1,215 +1,149 @@
-const API_URL = 'http://localhost:5001/api';
+import { supabase } from '../supabaseClient.jsx';
 
 export const authService = {
   async login(email, password) {
-    const response = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
     });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Login failed');
-    }
-    
+    if (error) throw error;
     return data;
   },
 
-  async register(username, email, password) {
-    const response = await fetch(`${API_URL}/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, email, password }),
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Registration failed');
-    }
-    
-    return data;
-  },
-
-  async getCurrentUser() {
-    const token = localStorage.getItem('token');
-    if (!token) return null;
-
-    const response = await fetch(`${API_URL}/user`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
+  async register(email, password, username) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          username
+        }
       }
     });
-
-    if (!response.ok) throw new Error('Failed to get user data');
-    return response.json();
+    if (error) throw error;
+    return data;
   },
 
-  async addToWatchlist(showId, showTitle, posterPath) {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/watchlist`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ showId, showTitle, posterPath })
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || 'Failed to add to watchlist');
-    }
-    return response.json();
+  async logout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   },
 
   async getWatchlist() {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/watchlist`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
 
-    if (!response.ok) throw new Error('Failed to get watchlist');
-    return response.json();
+    const { data, error } = await supabase
+      .from('show_status')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'plan_to_watch');
+    if (error) throw error;
+    return data;
   },
 
-  async removeFromWatchlist(showId) {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/watchlist/${showId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+  async addToWatchlist(show_id, show_title, poster_path) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
 
-    if (!response.ok) throw new Error('Failed to remove from watchlist');
-    return response.json();
+    const { data, error } = await supabase
+      .from('show_status')
+      .insert([{ 
+        show_id, 
+        show_title, 
+        poster_path, 
+        user_id: user.id,
+        status: 'plan_to_watch'
+      }]);
+    if (error) throw error;
+    return data;
   },
 
-  async updateProfile(profileData) {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/user/profile`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(profileData)
-    });
+  async removeFromWatchlist(show_id) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
 
-    if (!response.ok) throw new Error('Failed to update profile');
-    return response.json();
+    const { error } = await supabase
+      .from('show_status')
+      .delete()
+      .eq('show_id', show_id)
+      .eq('user_id', user.id)
+      .eq('status', 'plan_to_watch');
+    if (error) throw error;
   },
 
-  async getWatchedShows() {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/watched`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+  async updateShowProgress(show_id, show_title, poster_path, season, episode) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
 
-    if (!response.ok) throw new Error('Failed to get watched shows');
-    return response.json();
-  },
-
-  async markAsWatched(showId, showTitle, posterPath) {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/watched`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ showId, showTitle, posterPath })
-    });
-
-    if (!response.ok) throw new Error('Failed to mark as watched');
-    return response.json();
+    const { data, error } = await supabase
+      .from('show_progress')
+      .upsert({
+        show_id,
+        show_title,
+        poster_path,
+        current_season: season,
+        current_episode: episode,
+        user_id: user.id
+      });
+    if (error) throw error;
+    return data;
   },
 
   async getShowProgress() {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/progress`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
 
-    if (!response.ok) throw new Error('Failed to get show progress');
-    return response.json();
+    const { data, error } = await supabase
+      .from('show_progress')
+      .select('*')
+      .eq('user_id', user.id);
+    if (error) throw error;
+    return data;
   },
 
-  async updateShowProgress(showId, season, episode, status = 'watching') {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/progress/${showId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ season, episode, status })
-    });
+  async updateShowStatus(show_id, show_title, poster_path, status, score, current_episode) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
 
-    if (!response.ok) throw new Error('Failed to update progress');
-    return response.json();
-  },
-
-  async removeFromProgress(showId) {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/progress/${showId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) throw new Error('Failed to remove from progress');
-    return response.json();
-  },
-
-  async removeFromWatched(showId) {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/watched/${showId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    if (!response.ok) throw new Error('Failed to remove from watched');
-    return response.json();
-  },
-
-  async updateShowStatus(showId, showTitle, posterPath, status, score, episodesWatched) {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/shows/${showId}/status`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        showTitle,
-        posterPath,
+    const { data, error } = await supabase
+      .from('show_status')
+      .upsert({
+        show_id,
+        show_title,
+        poster_path,
         status,
         score,
-        episodesWatched
-      })
-    });
+        current_episode,
+        user_id: user.id
+      });
+    if (error) throw error;
+    return data;
+  },
 
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || 'Failed to update show status');
-    }
-    return response.json();
+  async updateShowScore(show_id, score) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase
+      .from('show_status')
+      .update({ score })
+      .eq('show_id', show_id)
+      .eq('user_id', user.id);
+    if (error) throw error;
+    return data;
+  },
+
+  async getWatchedShows() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase
+      .from('show_status')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'completed');
+    if (error) throw error;
+    return data;
   }
 }; 

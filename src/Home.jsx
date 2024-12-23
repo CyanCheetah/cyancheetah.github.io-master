@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import './Home.css';
+import { useAuth } from './context/AuthContext.jsx';
 
 const TMDB_API_KEY = '7ceb22d73d90c1567ca77b9aedb51cd8';
 
@@ -11,6 +12,7 @@ const Home = () => {
   const [query, setQuery] = useState(''); // State for the search bar query
   const [searchResults, setSearchResults] = useState([]); // State for storing search results
   const navigate = useNavigate(); // For programmatic navigation
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchRandomShows = async () => {
@@ -70,7 +72,19 @@ const Home = () => {
   };
 
   return (
-    <div className="home">
+    <div className="home-container">
+      <div className="welcome-section">
+        {user ? (
+          <>
+            <h1>Welcome back to CyanBase, {user.username}!</h1>
+          </>
+        ) : (
+          <>
+            <h1>Welcome to CyanBase</h1>
+            <Link to="/login" className="button-30">Create Account</Link>
+          </>
+        )}
+      </div>
       {/* Show Carousel */}
       <div className="show-carousel-container">
         <div className="show-carousel">
