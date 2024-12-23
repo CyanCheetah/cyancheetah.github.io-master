@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import './Home.css';
 import { useAuth } from './context/AuthContext.jsx';
+import { supabase } from './supabaseClient.jsx';
 
 const TMDB_API_KEY = '7ceb22d73d90c1567ca77b9aedb51cd8';
 
@@ -13,6 +14,7 @@ const Home = () => {
   const [searchResults, setSearchResults] = useState([]); // State for storing search results
   const navigate = useNavigate(); // For programmatic navigation
   const { user } = useAuth();
+  const [profileData, setProfileData] = useState(null);
 
   useEffect(() => {
     const fetchRandomShows = async () => {
@@ -30,6 +32,27 @@ const Home = () => {
 
     fetchRandomShows();
   }, []);
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) throw error;
+        setProfileData(data);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    };
+
+    fetchProfileData();
+  }, [user]);
 
   // Handle input changes for the search bar
   const handleSearchInput = (e) => {
@@ -73,18 +96,6 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      <div className="welcome-section">
-        {user ? (
-          <>
-            <h1>Welcome back to CyanBase, {user.username}!</h1>
-          </>
-        ) : (
-          <>
-            <h1>Welcome to CyanBase</h1>
-            <Link to="/login" className="button-30">Create Account</Link>
-          </>
-        )}
-      </div>
       {/* Show Carousel */}
       <div className="show-carousel-container">
         <div className="show-carousel">
@@ -101,10 +112,16 @@ const Home = () => {
           ))}
         </div>
       </div>
-      {/* Carousel for Random TV Shows */}
+      {/* Content section - Update this */}
       <div className="content">
-        <h1>Welcome to CyanBase</h1>
-        <p>Your ultimate source for TV shows</p>
+        {user ? (
+          <h1>Welcome back to CyanBase, {profileData?.username || 'User'}!</h1>
+        ) : (
+          <>
+            <h1>Welcome to CyanBase</h1>
+            <p>Your ultimate source for TV shows</p>
+          </>
+        )}
       </div>
       {/* Search Bar */}
       <div className="search-container2">
