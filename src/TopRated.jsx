@@ -44,7 +44,7 @@ const TopRated = () => {
 
   useEffect(() => {
     fetchShows();
-  }, []);
+  }, [selectedGenre, yearRange]);
 
   const handleShowResults = () => {
     fetchShows();

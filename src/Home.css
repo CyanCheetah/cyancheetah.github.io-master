@@ -53,13 +53,15 @@ body {
   height: 90%; /* Maintain the aspect ratio */
   padding-top: 1px;
   display: block;
-  transform: scale(1.1) scaleX(1.6);
+  transform: scale(1.4) scaleX(1.2);
   transition: transform 0.3s ease, opacity 0.3s ease; /* Smooth hover effect */
+  cursor: pointer;
 }
 
 .logo:hover .logo-image {
   transform: scaleX(1.2); /* Scale width by 20% on hover */
   opacity: 0.8; /* Add hover opacity effect */
+  
 }
 
 

@@ -15,7 +15,7 @@ import TopRated from './TopRated.jsx';
 import SearchResults from './SearchResults.jsx'; // Import the SearchResults component
 import './Home.css';
 import Login from './Login.jsx';
-import { AuthProvider, useAuth } from './context/AuthContext.jsx';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import ActorPage from './ActorPage.jsx';
 
@@ -117,7 +117,7 @@ const TopBar = ({ query, setQuery }) => {
           onChange={handleSearchInput}
           onKeyPress={handleSearch}
         />
-        <button className="button" type="submit" onClick={handleSearch}>
+        <button className="buttonhaha" type="submit" onClick={handleSearch} style={{ paddingRight: '1%' }}>
           <i className="fa fa-search"></i>
         </button>
       </div>
