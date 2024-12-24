@@ -11,24 +11,23 @@ const SearchResults = () => {
   // Remove duplicates and Jikan entries if they exist in TMDB
   const processedResults = results.reduce((acc, current) => {
     // Check if this is a TMDB entry
-    if (current.type === 'tv') {
+    if (current.type === 'tv' || current.type === 'movie') {
       // If it's a TMDB show, check if it's an anime
       const isAnime = current.origin_country?.includes('JP') || 
                      current.original_language === 'ja' ||
                      current.genres?.some(g => g.name === 'Animation');
       
       if (isAnime) {
-        current.isAnime = true; // Mark as anime for filtering
+        current.isAnime = true;
       }
       acc.push(current);
     } else if (current.type === 'anime') {
-      // For Jikan entries, check if there's a TMDB equivalent
+      // For Jikan entries, check if there's no TMDB equivalent
       const tmdbEquivalent = acc.find(item => 
         item.name?.toLowerCase() === current.title?.toLowerCase() ||
         item.original_name?.toLowerCase() === current.title?.toLowerCase()
       );
       
-      // Only add if there's no TMDB equivalent
       if (!tmdbEquivalent) {
         acc.push(current);
       }
@@ -36,10 +35,11 @@ const SearchResults = () => {
     return acc;
   }, []);
 
-  // Filter results based on source and anime status
+  // Filter results based on source and type
   const filteredResults = processedResults.filter(item => {
     if (sourceFilter === 'all') return true;
     if (sourceFilter === 'tv') return item.type === 'tv' && !item.isAnime;
+    if (sourceFilter === 'movie') return item.type === 'movie';
     if (sourceFilter === 'anime') return item.type === 'anime' || (item.type === 'tv' && item.isAnime);
     return true;
   });
@@ -71,13 +71,19 @@ const SearchResults = () => {
             className={`filter-button ${sourceFilter === 'all' ? 'active' : ''}`}
             onClick={() => setSourceFilter('all')}
           >
-            All Shows
+            All Results
           </button>
           <button 
             className={`filter-button ${sourceFilter === 'tv' ? 'active' : ''}`}
             onClick={() => setSourceFilter('tv')}
           >
             TV Shows
+          </button>
+          <button 
+            className={`filter-button ${sourceFilter === 'movie' ? 'active' : ''}`}
+            onClick={() => setSourceFilter('movie')}
+          >
+            Movies
           </button>
           <button 
             className={`filter-button ${sourceFilter === 'anime' ? 'active' : ''}`}

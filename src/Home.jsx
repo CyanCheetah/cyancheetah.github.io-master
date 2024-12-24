@@ -38,14 +38,14 @@ const Home = () => {
   useEffect(() => {
     const fetchProfileData = async () => {
       if (!user) return;
-      
+
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('username')
           .eq('id', user.id)
           .single();
-          
+
         if (error) throw error;
         setProfileData(data);
       } catch (err) {
@@ -83,10 +83,10 @@ const Home = () => {
         setCombinedResults(combined);
 
         // Navigate to search results with both types
-        navigate('/search', { 
-          state: { 
+        navigate('/search', {
+          state: {
             results: combined,
-            query: query 
+            query: query
           }
         });
       } catch (error) {

@@ -103,19 +103,6 @@
     background: rgba(255, 255, 255, 0.1);
   }
 
-  .app-container {
-    padding-top: 50px;
-    padding-bottom: calc(6vh + 10px);
-  }
-
-  .footer {
-    padding: 10px 15px;
-    height: 6vh;
-    min-height: 40px;
-    font-size: 0.7rem;
-    text-align: center;
-  }
-
   .footer a,
   .footer-left,
   .footer-center,
@@ -138,17 +125,8 @@
 
 
 
-  .footer {
-    padding: 1.5% 2%;
-    height: 4vh;
-    min-height: 30px;
-    font-size: 0.9rem;
-    text-align: center;
-  }
 
-  .app-container {
-    padding-bottom: calc(4vh + 10px);
-  }
+
 
   .logo-container {
     display: flex;
@@ -192,21 +170,10 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
-.footer {
-  background-color: #333;
-  color: white;
-  width: 100%;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 10;
-  text-align: center;
-}
+
 
 .footer-center {
   position: absolute;

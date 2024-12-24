@@ -116,14 +116,14 @@ function ShowDetails() {
 
   const handleActorClick = async (actorId) => {
     const isMobile = window.innerWidth <= 768;
-    
+
     try {
       // Fetch actor details
       const response = await fetch(
         `https://api.themoviedb.org/3/person/${actorId}?api_key=${TMDB_API_KEY}&language=en-US`
       );
       const actorData = await response.json();
-      
+
       // Fetch actor's TV shows
       const showsResponse = await fetch(
         `https://api.themoviedb.org/3/person/${actorId}/tv_credits?api_key=${TMDB_API_KEY}&language=en-US`
@@ -153,24 +153,6 @@ function ShowDetails() {
     setActorMovies([]);
   };
 
-  const handleMarkAsWatched = async () => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
-    try {
-      await authService.markAsWatched(
-        showDetails.id,
-        showDetails.name,
-        showDetails.poster_path
-      );
-      setIsWatched(true);
-    } catch (error) {
-      console.error('Error marking as watched:', error);
-    }
-  };
-
   const handleUpdateProgress = async (season, episode) => {
     if (!user) {
       navigate('/login');
@@ -188,27 +170,6 @@ function ShowDetails() {
       setShowProgressModal(false);
     } catch (error) {
       console.error('Error updating progress:', error);
-    }
-  };
-
-  const handleAddToWatchlist = async () => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
-    try {
-      await authService.addToWatchlist(
-        showDetails.id,
-        showDetails.name || showDetails.title,
-        showDetails.poster_path
-      );
-      setIsInWatchlist(true);
-      // Optional: Show a success message
-      alert('Added to watchlist!');
-    } catch (error) {
-      setWatchlistError(error.message);
-      console.error('Failed to add to watchlist:', error);
     }
   };
 
@@ -274,46 +235,78 @@ function ShowDetails() {
     }
   };
 
-  const handleEpisodeUpdate = async (season, episode) => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
+  const handleEpisodeUpdate = async (newSeason, newEpisode) => {
+    if (!user) return;
+  
     try {
-      const episodeNum = parseInt(episode);
-      if (isNaN(episodeNum)) return;
-
-      await authService.updateShowProgress(
-        showDetails.id,
-        showDetails.name,
-        showDetails.poster_path,
-        season,
-        episodeNum
-      );
-
-      setShowProgress(prev => ({
+      // Update local state optimistically for better UX
+      setCurrentSeason(newSeason);
+      setShowProgress((prev) => ({
         ...prev,
-        current_season: season,
-        current_episode: episodeNum
+        current_season: newSeason,
+        current_episode: newEpisode,
       }));
-
-      // Also update the status to watching if it's not already
-      if (status !== 'watching') {
-        setStatus('watching');
-        await authService.updateShowStatus(
-          showDetails.id,
-          showDetails.name,
-          showDetails.poster_path,
-          'watching',
-          score,
-          episodeNum
-        );
+  
+      // Check if an existing record exists
+      const { data: existingStatus, error: fetchError } = await supabase
+        .from('show_status')
+        .select('*')
+        .eq('show_id', id)
+        .eq('user_id', user.id)
+        .single();
+  
+      if (fetchError) throw fetchError;
+  
+      if (existingStatus) {
+        // Update existing record
+        const { error: updateError } = await supabase
+          .from('show_status')
+          .update({
+            current_episode: newEpisode,
+            current_season: newSeason,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('show_id', id)
+          .eq('user_id', user.id);
+  
+        if (updateError) throw updateError;
+      } else {
+        // Insert new record
+        const { error: insertError } = await supabase
+          .from('show_status')
+          .insert([
+            {
+              user_id: user.id,
+              show_id: id,
+              show_title: showDetails.name,
+              poster_path: showDetails.poster_path,
+              status: 'watching',
+              current_episode: newEpisode,
+              current_season: newSeason,
+            },
+          ]);
+  
+        if (insertError) throw insertError;
       }
     } catch (error) {
-      console.error('Error updating episode progress:', error);
+      console.error('Error updating episode:', error);
+      // Revert local state if an error occurs
+      const { data: revertedStatus, error: revertError } = await supabase
+        .from('show_status')
+        .select('*')
+        .eq('show_id', id)
+        .eq('user_id', user.id)
+        .single();
+  
+      if (!revertError && revertedStatus) {
+        setShowProgress({
+          current_season: revertedStatus.current_season,
+          current_episode: revertedStatus.current_episode,
+        });
+      }
     }
   };
+  
 
   const handleScoreChange = async (newScore) => {
     if (!user) {
@@ -382,13 +375,13 @@ function ShowDetails() {
             />
             {watchlistError && <div className="error-message">{watchlistError}</div>}
           </div>
-          
+
           <div className="show-details-right">
             <div className="show-header">
               <span className="show-title">{showDetails.name}</span>
               <span className="show-year">({new Date(showDetails.first_air_date).getFullYear()})</span>
             </div>
-            
+
             <div className="show-meta">
               <div className="show-rating">
                 ★ {showDetails.vote_average.toFixed(1)}
@@ -397,7 +390,7 @@ function ShowDetails() {
                 {showDetails.genres.map(genre => genre.name).join(' • ')}
               </div>
             </div>
-            
+
             <div className="show-overview-section">
               <h3 className="section-title">Synopsis</h3>
               <p className="show-overview">{showDetails.overview}</p>
@@ -408,8 +401,8 @@ function ShowDetails() {
                 <div className="tracking-controls">
                   <div className="tracking-group">
                     <label>Status</label>
-                    <select 
-                      value={status} 
+                    <select
+                      value={status}
                       onChange={(e) => handleStatusChange(e.target.value)}
                       className="status-select"
                     >
@@ -462,8 +455,8 @@ function ShowDetails() {
 
                   <div className="tracking-group">
                     <label>Score</label>
-                    <select 
-                      value={score} 
+                    <select
+                      value={score}
                       onChange={(e) => {
                         const newScore = Number(e.target.value);
                         if (!isNaN(newScore)) {
@@ -485,7 +478,7 @@ function ShowDetails() {
                 </div>
               )}
             </div>
-            
+
             <div className="cast-section">
               <h3 className="section-title">Cast</h3>
               <div className="actors-list">
@@ -520,52 +513,52 @@ function ShowDetails() {
       )}
 
       {/* Actor Details Modal */}
-{selectedActor && (
-  <div className="actor-details-modal">
-    <div className="actor-details-content">
-      <button className="close-button" onClick={closeActorModal}>×</button>
+      {selectedActor && (
+        <div className="actor-details-modal">
+          <div className="actor-details-content">
+            <button className="close-button" onClick={closeActorModal}>×</button>
 
-      <div className="actor-details-left">
-        <img
-          src={`https://image.tmdb.org/t/p/w300${selectedActor.profile_path}`}
-          alt={selectedActor.name}
-          className="actor-details-image"
-        />
-        <h2>{selectedActor.name}</h2>
-      </div>
+            <div className="actor-details-left">
+              <img
+                src={`https://image.tmdb.org/t/p/w300${selectedActor.profile_path}`}
+                alt={selectedActor.name}
+                className="actor-details-image"
+              />
+              <h2>{selectedActor.name}</h2>
+            </div>
 
-      <div className="actor-details-right">
-        <div className="actor-details-bio">
-          <p><strong>Born:</strong> {selectedActor.birthday || 'N/A'}</p>
-          <p>{selectedActor.biography || 'No biography available.'}</p>
-        </div>
+            <div className="actor-details-right">
+              <div className="actor-details-bio">
+                <p><strong>Born:</strong> {selectedActor.birthday || 'N/A'}</p>
+                <p>{selectedActor.biography || 'No biography available.'}</p>
+              </div>
 
-        <div className="actor-shows-section">
-          <h3>Latest TV Shows</h3>
-          <div className="actor-shows-grid">
-            {actorMovies && actorMovies.map((show) => (
-              <Link
-                to={`/show/${show.id}`}
-                key={show.id}
-                className="actor-show-card"
-                onClick={closeActorModal}
-              >
-                <img
-                  src={`https://image.tmdb.org/t/p/w500${show.poster_path}`}
-                  alt={show.name}
-                />
-                <h3>{show.name}</h3>
-                <p>({show.first_air_date ? show.first_air_date.split('-')[0] : 'N/A'})</p>
-              </Link>
-            ))}
+              <div className="actor-shows-section">
+                <h3>Latest TV Shows</h3>
+                <div className="actor-shows-grid">
+                  {actorMovies && actorMovies.map((show) => (
+                    <Link
+                      to={`/show/${show.id}`}
+                      key={show.id}
+                      className="actor-show-card"
+                      onClick={closeActorModal}
+                    >
+                      <img
+                        src={`https://image.tmdb.org/t/p/w500${show.poster_path}`}
+                        alt={show.name}
+                      />
+                      <h3>{show.name}</h3>
+                      <p>({show.first_air_date ? show.first_air_date.split('-')[0] : 'N/A'})</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
-{showProgressModal && <ProgressModal />}
+      {showProgressModal && <ProgressModal />}
 
     </div>
   );

@@ -308,7 +308,6 @@ form.example::after {
   align-items: center;
   /* Vertically center the content */
   background-color: #004c56;
-  /* Footer background color */
   color: white;
   /* Footer text color */
   padding: 10px 20px;
@@ -321,6 +320,8 @@ form.example::after {
   font-size: 14px;
   /* Adjust text size */
   z-index: 10;
+  position: static;
+  margin-top: auto;
 }
 
 .footer-left {
